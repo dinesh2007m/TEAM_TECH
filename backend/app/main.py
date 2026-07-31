@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes.upload import router as upload_router
 from app.routes.phishing import router as phishing_router
+from app.routes.sandbox import router as sandbox_router
 
 app = FastAPI(
     title="TEAM_TECH Backend",
@@ -24,6 +25,7 @@ app.add_middleware(
 
 app.include_router(upload_router, prefix="/api/v1")
 app.include_router(phishing_router, prefix="/api/v1")
+app.include_router(sandbox_router, prefix="/api/v1")
 
 @app.get("/")
 def root():

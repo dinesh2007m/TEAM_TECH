@@ -115,3 +115,73 @@ export async function analyzePhishing(parsedEmail) {
 
   return data;
 }
+
+/**
+ * Uploads any file to the Phase 4 Sandbox Static Analysis Engine.
+ *
+ * @param {File} file  - Any file object selected by the user.
+ * @returns {Promise<{
+ *   status: string,
+ *   filename: string,
+ *   risk_score: number,
+ *   risk_level: string,
+ *   analysis: object,
+ *   indicators: Array
+ * }>}
+ * @throws {Error} with a user-friendly message on any failure.
+ */
+export async function analyzeAttachment(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  console.log('[emailService] Sandbox analyzing file:', file.name, `(${file.size} bytes)`);
+
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/sandbox/analyze`, {
+      method: 'POST',
+      body: formData,
+      // Do NOT set Content-Type header — browser sets it with the correct
+      // multipart boundary automatically.
+    });
+  } catch (networkError) {
+    console.error('[emailService] Sandbox API network error:', networkError);
+    throw new Error(
+      'Cannot reach the sandbox analysis server. Make sure the backend is running at http://127.0.0.1:8000.'
+    );
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error('Sandbox analysis returned an unreadable response. Please try again.');
+  }
+
+  console.log('[emailService] Sandbox response:', response.status, data);
+
+  if (!response.ok) {
+    const detail =
+      typeof data?.detail === 'string'
+        ? data.detail
+        : Array.isArray(data?.detail)
+        ? data.detail.map((e) => e.msg).join(', ')
+        : `HTTP ${response.status}`;
+
+    if (response.status === 400) {
+      throw new Error(detail || 'Bad request. The file may be empty or unreadable.');
+    }
+    if (response.status === 413) {
+      throw new Error('File is too large. Maximum allowed size is 25 MB.');
+    }
+    if (response.status === 422) {
+      throw new Error(detail || 'Validation failed. Please check the file and try again.');
+    }
+    if (response.status >= 500) {
+      throw new Error('Server error. The sandbox engine encountered an unexpected problem.');
+    }
+    throw new Error(detail || `Unexpected error (HTTP ${response.status}).`);
+  }
+
+  return data;
+}
