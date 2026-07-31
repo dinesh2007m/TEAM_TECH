@@ -1,0 +1,26 @@
+{
+  "summary": {
+    "attackProbability": 94,
+    "pathLength": 12,
+    "compromisedAssets": 6,
+    "criticalAssetsAtRisk": 4,
+    "blastRadius": 31,
+    "detectionConfidence": 91,
+    "timeToDetection": "4m 22s",
+    "timeToContainment": "18m 47s"
+  },
+  "attackPath": [
+    { "id": "ap-1", "stage": "Initial Access", "asset": "Email Gateway", "technique": "Spearphishing Attachment", "mitreId": "T1566.001", "risk": "high", "timestamp": "2024-12-18T08:47:22Z", "status": "confirmed", "description": "Phishing email with macro-enabled document delivered to finance@company.com" },
+    { "id": "ap-2", "stage": "Execution", "asset": "Employee Workstation WS-FIN-042", "technique": "Malicious File Execution", "mitreId": "T1204.002", "risk": "critical", "timestamp": "2024-12-18T09:13:18Z", "status": "confirmed", "description": "User opened DOCM and enabled macros, triggering Auto_Open VBA subroutine" },
+    { "id": "ap-3", "stage": "Execution", "asset": "Employee Workstation WS-FIN-042", "technique": "PowerShell", "mitreId": "T1059.001", "risk": "critical", "timestamp": "2024-12-18T09:13:27Z", "status": "confirmed", "description": "VBA macro spawned powershell.exe with -EncodedCommand flag" },
+    { "id": "ap-4", "stage": "Persistence", "asset": "Employee Workstation WS-FIN-042", "technique": "Registry Run Keys", "mitreId": "T1547.001", "risk": "high", "timestamp": "2024-12-18T09:13:34Z", "status": "confirmed", "description": "Persistence established via HKCU Run key with AdobeUpdater entry" },
+    { "id": "ap-5", "stage": "Privilege Escalation", "asset": "Employee Workstation WS-FIN-042", "technique": "Access Token Manipulation", "mitreId": "T1134", "risk": "critical", "timestamp": "2024-12-18T09:13:38Z", "status": "confirmed", "description": "Token impersonation to escalate from user to SYSTEM privileges" },
+    { "id": "ap-6", "stage": "Defense Evasion", "asset": "Employee Workstation WS-FIN-042", "technique": "DLL Injection", "mitreId": "T1055.001", "risk": "high", "timestamp": "2024-12-18T09:13:42Z", "status": "confirmed", "description": "Injected malicious DLL into svchost.exe to evade detection" },
+    { "id": "ap-7", "stage": "Credential Access", "asset": "Active Directory DC-01", "technique": "LSASS Memory", "mitreId": "T1003.001", "risk": "critical", "timestamp": "2024-12-18T09:13:45Z", "status": "confirmed", "description": "LSASS memory dump to extract NTLM hashes and Kerberos tickets" },
+    { "id": "ap-8", "stage": "Discovery", "asset": "Active Directory DC-01", "technique": "Domain Trust Discovery", "mitreId": "T1482", "risk": "high", "timestamp": "2024-12-18T09:13:52Z", "status": "confirmed", "description": "Enumerated domain trusts, admin groups, and service accounts" },
+    { "id": "ap-9", "stage": "Lateral Movement", "asset": "File Server FS-01", "technique": "SMB/Windows Admin Shares", "mitreId": "T1021.002", "risk": "critical", "timestamp": "2024-12-18T09:14:05Z", "status": "predicted", "description": "Pass-the-hash to access administrative shares on file server" },
+    { "id": "ap-10", "stage": "Collection", "asset": "Database Server DB-PROD-01", "technique": "Data from Information Repositories", "mitreId": "T1213", "risk": "critical", "timestamp": "2024-12-18T09:14:19Z", "status": "predicted", "description": "SQL queries to extract PII and financial records from production database" },
+    { "id": "ap-11", "stage": "Command and Control", "asset": "Employee Workstation WS-FIN-042", "technique": "Web Protocols", "mitreId": "T1071.001", "risk": "high", "timestamp": "2024-12-18T09:14:28Z", "status": "confirmed", "description": "C2 beaconing via HTTPS to 185.220.101.47:443 through Tor exit node" },
+    { "id": "ap-12", "stage": "Exfiltration", "asset": "Cloud Storage S3", "technique": "Exfiltration Over C2 Channel", "mitreId": "T1041", "risk": "critical", "timestamp": "2024-12-18T09:14:33Z", "status": "blocked", "description": "Data exfiltration attempt blocked by AegisX endpoint agent at network boundary" }
+  ]
+}

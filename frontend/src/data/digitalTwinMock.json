@@ -1,0 +1,66 @@
+{
+  "metrics": {
+    "totalAssets": 247,
+    "protectedAssets": 198,
+    "highRiskAssets": 31,
+    "compromisedAssets": 6,
+    "networkSegments": 12,
+    "activeAttackPaths": 3
+  },
+  "environments": [
+    {
+      "id": "env-hq",
+      "name": "Corporate Headquarters",
+      "type": "On-Premises",
+      "totalAssets": 142,
+      "criticalAssets": 18,
+      "securityPosture": "Moderate",
+      "riskScore": 68,
+      "lastSync": "2024-12-18T09:12:44Z",
+      "status": "active",
+      "icon": "Building",
+      "description": "Primary corporate campus network including executive, finance, HR, and engineering departments.",
+      "segments": ["Corporate LAN", "Server VLAN", "Guest WiFi", "Management Network"]
+    },
+    {
+      "id": "env-cloud",
+      "name": "Cloud Production Environment",
+      "type": "AWS / Azure Hybrid",
+      "totalAssets": 78,
+      "criticalAssets": 12,
+      "securityPosture": "Good",
+      "riskScore": 42,
+      "lastSync": "2024-12-18T09:15:02Z",
+      "status": "active",
+      "icon": "Cloud",
+      "description": "Production workloads across AWS and Azure with containerized microservices and managed databases.",
+      "segments": ["Production VPC", "Staging VPC", "Data Lake", "CDN Edge"]
+    },
+    {
+      "id": "env-branch",
+      "name": "Regional Branch Network",
+      "type": "SD-WAN Connected",
+      "totalAssets": 27,
+      "criticalAssets": 4,
+      "securityPosture": "At Risk",
+      "riskScore": 74,
+      "lastSync": "2024-12-18T08:45:19Z",
+      "status": "warning",
+      "icon": "Globe",
+      "description": "Regional branch offices connected via SD-WAN with local file servers and VoIP infrastructure.",
+      "segments": ["Branch LAN", "VoIP VLAN", "IoT Segment"]
+    }
+  ],
+  "assetGroups": [
+    { "id": "ag-1", "name": "Internet Gateway", "icon": "Globe", "count": 3, "risk": "moderate", "status": "secure" },
+    { "id": "ag-2", "name": "Email Gateway", "icon": "Mail", "count": 4, "risk": "high", "status": "warning" },
+    { "id": "ag-3", "name": "Web Applications", "icon": "AppWindow", "count": 12, "risk": "moderate", "status": "secure" },
+    { "id": "ag-4", "name": "Identity Provider", "icon": "UserCheck", "count": 3, "risk": "critical", "status": "warning" },
+    { "id": "ag-5", "name": "Employee Workstations", "icon": "Monitor", "count": 96, "risk": "high", "status": "compromised" },
+    { "id": "ag-6", "name": "Domain Controllers", "icon": "Server", "count": 4, "risk": "critical", "status": "warning" },
+    { "id": "ag-7", "name": "Application Servers", "icon": "HardDrive", "count": 18, "risk": "moderate", "status": "secure" },
+    { "id": "ag-8", "name": "Database Servers", "icon": "Database", "count": 8, "risk": "critical", "status": "secure" },
+    { "id": "ag-9", "name": "Cloud Services", "icon": "Cloud", "count": 22, "risk": "low", "status": "secure" },
+    { "id": "ag-10", "name": "SOC Operations", "icon": "ShieldCheck", "count": 6, "risk": "low", "status": "secure" }
+  ]
+}

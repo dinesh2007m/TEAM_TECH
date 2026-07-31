@@ -1,0 +1,177 @@
+[
+  {
+    "timestamp": "08:47:18",
+    "severity": "info",
+    "message": "Inbound SMTP connection established from 198.51.100.12",
+    "asset": "Email Gateway",
+    "technique": "SMTP Protocol"
+  },
+  {
+    "timestamp": "08:47:20",
+    "severity": "warning",
+    "message": "SPF validation check soft fail from sending domain acc0unting-dept.com",
+    "asset": "Email Gateway",
+    "technique": "Phishing Delivery"
+  },
+  {
+    "timestamp": "08:47:22",
+    "severity": "info",
+    "message": "Email attachment received by recipient inbox: finance@company.com",
+    "asset": "Email Gateway",
+    "technique": "Spearphishing Attachment"
+  },
+  {
+    "timestamp": "09:13:02",
+    "severity": "info",
+    "message": "Microsoft Word process WINWORD.EXE started on host WS-FIN-042",
+    "asset": "Employee Workstation WS-FIN-042",
+    "technique": "User Execution"
+  },
+  {
+    "timestamp": "09:13:18",
+    "severity": "warning",
+    "message": "File open event: Invoice_Q4_2024_Payroll.docm executed from user Downloads directory",
+    "asset": "Employee Workstation WS-FIN-042",
+    "technique": "User Execution"
+  },
+  {
+    "timestamp": "09:13:22",
+    "severity": "high",
+    "message": "VBA Auto_Open macro execution detected inside WINWORD.EXE process context",
+    "asset": "Employee Workstation WS-FIN-042",
+    "technique": "VBA Macro Execution"
+  },
+  {
+    "timestamp": "09:13:25",
+    "severity": "high",
+    "message": "Auto_Open macro initiated child process spawning request via winmgmts:Win32_Process",
+    "asset": "Employee Workstation WS-FIN-042",
+    "technique": "Windows Management Instrumentation"
+  },
+  {
+    "timestamp": "09:13:27",
+    "severity": "critical",
+    "message": "powershell.exe process spawned by WINWORD.EXE with -EncodedCommand parameter",
+    "asset": "Employee Workstation WS-FIN-042",
+    "technique": "PowerShell Execution"
+  },
+  {
+    "timestamp": "09:13:30",
+    "severity": "high",
+    "message": "Antimalware Scan Interface (AMSI) flagged base64 encoded PowerShell script block execution",
+    "asset": "Employee Workstation WS-FIN-042",
+    "technique": "Obfuscated Files or Information"
+  },
+  {
+    "timestamp": "09:13:34",
+    "severity": "high",
+    "message": "Registry modification: HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\AdobeUpdater created",
+    "asset": "Employee Workstation WS-FIN-042",
+    "technique": "Registry Run Keys"
+  },
+  {
+    "timestamp": "09:13:38",
+    "severity": "critical",
+    "message": "Token Impersonation: Process escalated from local domain user to SYSTEM privileges",
+    "asset": "Employee Workstation WS-FIN-042",
+    "technique": "Access Token Manipulation"
+  },
+  {
+    "timestamp": "09:13:42",
+    "severity": "high",
+    "message": "Process injection detected: Malicious DLL payload injected into svchost.exe (PID 1420)",
+    "asset": "Employee Workstation WS-FIN-042",
+    "technique": "DLL Injection"
+  },
+  {
+    "timestamp": "09:13:45",
+    "severity": "critical",
+    "message": "LSASS Access Alert: dump request made to lsass.exe process memory from SYSTEM context",
+    "asset": "Active Directory DC-01",
+    "technique": "LSASS Memory Dump"
+  },
+  {
+    "timestamp": "09:13:48",
+    "severity": "critical",
+    "message": "NTLM hashes and Kerberos TGT tickets extracted from LSASS dump directory",
+    "asset": "Active Directory DC-01",
+    "technique": "LSASS Memory Dump"
+  },
+  {
+    "timestamp": "09:13:52",
+    "severity": "high",
+    "message": "Active Directory enumeration query initiated: net group 'Domain Admins' /domain",
+    "asset": "Active Directory DC-01",
+    "technique": "Domain Trust Discovery"
+  },
+  {
+    "timestamp": "09:14:02",
+    "severity": "warning",
+    "message": "Service account SPNs query registered from source host WS-FIN-042",
+    "asset": "Active Directory DC-01",
+    "technique": "Domain Trust Discovery"
+  },
+  {
+    "timestamp": "09:14:05",
+    "severity": "critical",
+    "message": "Pass-the-Hash Detected: Administrative authentication attempt via SMB to \\\\FS-01\\C$",
+    "asset": "File Server FS-01",
+    "technique": "Pass-the-Hash"
+  },
+  {
+    "timestamp": "09:14:12",
+    "severity": "high",
+    "message": "Network mapping: Access established to shared directory: \\\\FS-01\\C$\\Finance\\Payroll",
+    "asset": "File Server FS-01",
+    "technique": "Data from Network Shares"
+  },
+  {
+    "timestamp": "09:14:15",
+    "severity": "high",
+    "message": "Anomalous mass file read operation: 840 files copied in 12 seconds from payroll drive",
+    "asset": "File Server FS-01",
+    "technique": "Data from Network Shares"
+  },
+  {
+    "timestamp": "09:14:19",
+    "severity": "critical",
+    "message": "Anomalous SQL queries executed: SELECT * from employees where department = 'Finance'",
+    "asset": "Database Server DB-PROD-01",
+    "technique": "Data from Information Repositories"
+  },
+  {
+    "timestamp": "09:14:24",
+    "severity": "high",
+    "message": "Database exports stored in local ZIP archive at C:\\Users\\Public\\Temp\\payroll.zip",
+    "asset": "Employee Workstation WS-FIN-042",
+    "technique": "Data Staged"
+  },
+  {
+    "timestamp": "09:14:28",
+    "severity": "critical",
+    "message": "Outbound HTTPS connection beacon initiated to Tor exit node: 185.220.101.47:443",
+    "asset": "Employee Workstation WS-FIN-042",
+    "technique": "Web Protocols C2"
+  },
+  {
+    "timestamp": "09:14:33",
+    "severity": "critical",
+    "message": "Egress Blocked: Cloud exfiltration attempt to s3.amazonaws.com intercepted at boundary",
+    "asset": "Cloud Storage S3",
+    "technique": "Exfiltration Over C2 Channel"
+  },
+  {
+    "timestamp": "09:14:35",
+    "severity": "success",
+    "message": "AegisX endpoint agent enforced network containment policy: Isolated WS-FIN-042",
+    "asset": "Employee Workstation WS-FIN-042",
+    "technique": "Automated Remediation"
+  },
+  {
+    "timestamp": "09:14:38",
+    "severity": "success",
+    "message": "Threat fully contained. Attack propagation score reduced. Operational status stable.",
+    "asset": "Enterprise Network",
+    "technique": "Incident Response"
+  }
+]

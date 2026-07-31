@@ -1,0 +1,134 @@
+[
+  {
+    "id": "rem-1",
+    "priority": "critical",
+    "title": "Isolate compromised employee workstation",
+    "description": "Disconnect host WS-FIN-042 from the corporate network using endpoint agent isolation to prevent further lateral movement.",
+    "affectedAsset": "WS-FIN-042 (Employee Workstation)",
+    "riskReduction": 25,
+    "timeEstimate": "2 mins",
+    "status": "In Progress",
+    "ownerTeam": "Endpoint Security"
+  },
+  {
+    "id": "rem-2",
+    "priority": "critical",
+    "title": "Disable affected user account",
+    "description": "Revoke active session tokens and disable Active Directory account for finance@company.com.",
+    "affectedAsset": "finance@company.com (AD User)",
+    "riskReduction": 20,
+    "timeEstimate": "5 mins",
+    "status": "Not Started",
+    "ownerTeam": "Identity Access"
+  },
+  {
+    "id": "rem-3",
+    "priority": "critical",
+    "title": "Reset exposed credentials in AD",
+    "description": "Force password change and rotate Kerberos Ticket Granting Service (TGS) keys for compromised service accounts.",
+    "affectedAsset": "Active Directory (DC-01)",
+    "riskReduction": 22,
+    "timeEstimate": "10 mins",
+    "status": "Pending Approval",
+    "ownerTeam": "Identity Access"
+  },
+  {
+    "id": "rem-4",
+    "priority": "high",
+    "title": "Block malicious sender domain",
+    "description": "Add acc0unting-dept.com to perimeter email gateway blocklist and purge existing messages from user inboxes.",
+    "affectedAsset": "Email Gateway",
+    "riskReduction": 12,
+    "timeEstimate": "15 mins",
+    "status": "Not Started",
+    "ownerTeam": "Email Security"
+  },
+  {
+    "id": "rem-5",
+    "priority": "high",
+    "title": "Block malicious file hash",
+    "description": "Distribute global EDR block rule for SHA-256 hash of Invoice_Q4_2024_Payroll.docm.",
+    "affectedAsset": "All Endpoints",
+    "riskReduction": 15,
+    "timeEstimate": "5 mins",
+    "status": "Completed",
+    "ownerTeam": "Endpoint Security"
+  },
+  {
+    "id": "rem-6",
+    "priority": "high",
+    "title": "Disable suspicious PowerShell execution",
+    "description": "Enforce constrained language mode and block encoded command execution on all workstation group policies.",
+    "affectedAsset": "Employee Workstations",
+    "riskReduction": 18,
+    "timeEstimate": "30 mins",
+    "status": "Not Started",
+    "ownerTeam": "Endpoint Security"
+  },
+  {
+    "id": "rem-7",
+    "priority": "medium",
+    "title": "Apply critical security patches",
+    "description": "Deploy KB5036980 patch to resolve active directory credential extraction vulnerabilities.",
+    "affectedAsset": "DC-01 (Domain Controller)",
+    "riskReduction": 10,
+    "timeEstimate": "1 hour",
+    "status": "Pending Approval",
+    "ownerTeam": "IT Infrastructure"
+  },
+  {
+    "id": "rem-8",
+    "priority": "medium",
+    "title": "Review Active Directory permissions",
+    "description": "Audit delegation rights, adminSDHolder configuration, and identify excessive privileges on service accounts.",
+    "affectedAsset": "Active Directory Services",
+    "riskReduction": 14,
+    "timeEstimate": "4 hours",
+    "status": "Not Started",
+    "ownerTeam": "Identity Access"
+  },
+  {
+    "id": "rem-9",
+    "priority": "medium",
+    "title": "Restrict lateral movement via SMB",
+    "description": "Implement firewall rules to block workstation-to-workstation SMB (port 445) communication.",
+    "affectedAsset": "Workstation Subnets",
+    "riskReduction": 15,
+    "timeEstimate": "45 mins",
+    "status": "Not Started",
+    "ownerTeam": "Network Security"
+  },
+  {
+    "id": "rem-10",
+    "priority": "medium",
+    "title": "Rotate service account credentials",
+    "description": "Generate new high-entropy passwords for database-facing application service accounts.",
+    "affectedAsset": "DB-PROD-01 Service Account",
+    "riskReduction": 12,
+    "timeEstimate": "20 mins",
+    "status": "Not Started",
+    "ownerTeam": "Identity Access"
+  },
+  {
+    "id": "rem-11",
+    "priority": "low",
+    "title": "Scan affected file servers",
+    "description": "Trigger deep antivirus and heuristic scan of files changed in FS-01 shared directories in the last 24 hours.",
+    "affectedAsset": "FS-01 (File Server)",
+    "riskReduction": 5,
+    "timeEstimate": "2 hours",
+    "status": "Not Started",
+    "ownerTeam": "IT Infrastructure"
+  },
+  {
+    "id": "rem-12",
+    "priority": "low",
+    "title": "Review data access logs",
+    "description": "Examine DB transaction logs for unusual SELECT query volumes or data dumps matching the compromised host window.",
+    "affectedAsset": "DB-PROD-01 (Database)",
+    "riskReduction": 8,
+    "timeEstimate": "1 hour",
+    "status": "In Progress",
+    "ownerTeam": "Security Operations"
+  }
+]

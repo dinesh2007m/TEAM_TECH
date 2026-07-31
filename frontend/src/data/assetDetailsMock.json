@@ -1,0 +1,249 @@
+{
+  "n-internet": {
+    "name": "Internet Boundary",
+    "type": "External Network Segment",
+    "ip": "0.0.0.0/0",
+    "os": "N/A",
+    "department": "Public Gateway",
+    "criticality": "Low",
+    "riskScore": 15,
+    "status": "secure",
+    "vulns": 0,
+    "events": [],
+    "connectedAssets": ["Email Gateway", "Perimeter Firewall", "VPN Gateway"],
+    "recommendedAction": "Monitor ingress traffic at border gateways for scanning and DDoS attempts."
+  },
+  "n-email-gw": {
+    "name": "Corporate Email Gateway",
+    "type": "Secure Email Gateway (SEG)",
+    "ip": "10.0.1.10",
+    "os": "Proofpoint SEG v8.20",
+    "department": "IT Security",
+    "criticality": "High",
+    "riskScore": 75,
+    "status": "warning",
+    "vulns": 2,
+    "events": [
+      "2024-12-18 08:47:22 - Phishing email bypassed inbound filters (Recipient: finance@company.com)",
+      "2024-12-18 08:50:11 - Automated domain reputation warning issued"
+    ],
+    "connectedAssets": ["Internet Boundary", "Employee Workstations"],
+    "recommendedAction": "Configure strict SPF/DKIM validation and verify URL rewriting policies."
+  },
+  "n-firewall": {
+    "name": "Perimeter Firewall",
+    "type": "Next-Gen Firewall (NGFW)",
+    "ip": "10.0.0.1",
+    "os": "Palo Alto PAN-OS 11.1",
+    "department": "Network Security",
+    "criticality": "Critical",
+    "riskScore": 12,
+    "status": "secure",
+    "vulns": 0,
+    "events": [],
+    "connectedAssets": ["Internet Boundary", "Web App Firewall", "Identity Provider"],
+    "recommendedAction": "Perform routine rule audits; ensure outbound DNS is restricted to company servers."
+  },
+  "n-vpn": {
+    "name": "Enterprise VPN Gateway",
+    "type": "Remote Access Gateway",
+    "ip": "10.0.0.5",
+    "os": "Cisco AnyConnect 4.10",
+    "department": "IT Operations",
+    "criticality": "High",
+    "riskScore": 38,
+    "status": "secure",
+    "vulns": 1,
+    "events": [],
+    "connectedAssets": ["Internet Boundary", "Active Directory"],
+    "recommendedAction": "Enforce MFA authentication on all VPN profiles and block login from unrecognized geographic centers."
+  },
+  "n-waf": {
+    "name": "Web Application Firewall",
+    "type": "Application Security",
+    "ip": "10.0.1.20",
+    "os": "Cloudflare WAF Suite",
+    "department": "IT Security",
+    "criticality": "High",
+    "riskScore": 18,
+    "status": "secure",
+    "vulns": 0,
+    "events": [],
+    "connectedAssets": ["Perimeter Firewall", "Application Server"],
+    "recommendedAction": "Update SQL injection patterns and enable rate limiting protections."
+  },
+  "n-idp": {
+    "name": "Identity Provider (IDP)",
+    "type": "Single Sign-On SSO",
+    "ip": "10.10.1.5",
+    "os": "Azure AD / Okta Agent",
+    "department": "Identity Team",
+    "criticality": "Critical",
+    "riskScore": 68,
+    "status": "warning",
+    "vulns": 1,
+    "events": [
+      "2024-12-18 09:13:20 - Unusual authentication pattern detected for user account finance@company.com"
+    ],
+    "connectedAssets": ["Perimeter Firewall", "Active Directory"],
+    "recommendedAction": "Reset tokens for the user and enforce additional authentication challenges."
+  },
+  "n-ad": {
+    "name": "Active Directory Services",
+    "type": "Directory Service / Domain Controller",
+    "ip": "10.10.1.10",
+    "os": "Windows Server 2022 Standard",
+    "department": "IT Infrastructure",
+    "criticality": "Critical",
+    "riskScore": 95,
+    "status": "compromised",
+    "vulns": 3,
+    "events": [
+      "2024-12-18 09:13:45 - High-severity Alert: LSASS process memory dump request registered",
+      "2024-12-18 09:13:52 - Kerberos tickets generated from unrecognized source node",
+      "2024-12-18 09:14:02 - Query of domain administrator privilege group from WS-FIN-042"
+    ],
+    "connectedAssets": ["VPN Gateway", "Identity Provider", "Employee Workstations", "Finance Workstations", "Application Server", "HR Workstations"],
+    "recommendedAction": "Isolate the source host, deploy patch KB5036980, and immediately force password rotation for all admin accounts."
+  },
+  "n-ws-emp": {
+    "name": "Employee Workstations Subnet",
+    "type": "Endpoint (Windows Group)",
+    "ip": "10.20.4.0/24",
+    "os": "Windows 11 Pro 23H2",
+    "department": "General Corporate",
+    "criticality": "High",
+    "riskScore": 92,
+    "status": "compromised",
+    "vulns": 4,
+    "events": [
+      "2024-12-18 09:13:18 - Threat Detected: Auto_Open VBA Macro executed inside WINWORD.EXE",
+      "2024-12-18 09:13:27 - Alert: PowerShell spawned with -EncodedCommand parameter",
+      "2024-12-18 09:14:28 - Threat Alert: Outbound C2 beacons detected over HTTPS to 185.220.101.47"
+    ],
+    "connectedAssets": ["Email Gateway", "Active Directory", "File Server"],
+    "recommendedAction": "Isolate the compromised host WS-FIN-042 from the network. Block the C2 IP at network firewalls."
+  },
+  "n-ws-fin": {
+    "name": "Finance Workstations Subnet",
+    "type": "Endpoint (Windows Group)",
+    "ip": "10.20.5.0/24",
+    "os": "Windows 11 Pro 23H2",
+    "department": "Finance Department",
+    "criticality": "High",
+    "riskScore": 72,
+    "status": "warning",
+    "vulns": 2,
+    "events": [
+      "2024-12-18 09:14:05 - Lateral movement warning: SMB connection attempt from WS-FIN-042"
+    ],
+    "connectedAssets": ["Active Directory", "Database Server"],
+    "recommendedAction": "Perform a threat hunt on finance subnets for residual scripts and restrict administrative file shares."
+  },
+  "n-ws-hr": {
+    "name": "HR Workstations Subnet",
+    "type": "Endpoint (Windows Group)",
+    "ip": "10.20.6.0/24",
+    "os": "Windows 11 Pro 23H2",
+    "department": "Human Resources",
+    "criticality": "Moderate",
+    "riskScore": 34,
+    "status": "secure",
+    "vulns": 1,
+    "events": [],
+    "connectedAssets": ["Active Directory"],
+    "recommendedAction": "Verify regular endpoint patch compliance and monitor for local credentials reuse."
+  },
+  "n-app-srv": {
+    "name": "Core Application Server",
+    "type": "Application Server",
+    "ip": "10.30.1.20",
+    "os": "Ubuntu 22.04 LTS",
+    "department": "Engineering Team",
+    "criticality": "High",
+    "riskScore": 42,
+    "status": "secure",
+    "vulns": 1,
+    "events": [],
+    "connectedAssets": ["Web App Firewall", "Active Directory", "Database Server"],
+    "recommendedAction": "Scan for outdated Node.js modules and rotate SSH server key pairs."
+  },
+  "n-file-srv": {
+    "name": "Corporate File Server",
+    "type": "File Storage Server",
+    "ip": "10.30.1.30",
+    "os": "Windows Server 2022 Standard",
+    "department": "IT Operations",
+    "criticality": "High",
+    "riskScore": 78,
+    "status": "warning",
+    "vulns": 2,
+    "events": [
+      "2024-12-18 09:14:05 - Administrative SMB share C$ accessed from WS-FIN-042",
+      "2024-12-18 09:14:15 - Mass download patterns flagged: 840 files copied in short interval"
+    ],
+    "connectedAssets": ["Employee Workstations", "Database Server"],
+    "recommendedAction": "Suspend the accessing user profile and immediately close the active SMB sessions on the server."
+  },
+  "n-db-srv": {
+    "name": "Production Database Server",
+    "type": "Relational SQL Database Server",
+    "ip": "10.30.2.10",
+    "os": "MS SQL Server 2022",
+    "department": "Database Admins (DBA)",
+    "criticality": "Critical",
+    "riskScore": 82,
+    "status": "warning",
+    "vulns": 2,
+    "events": [
+      "2024-12-18 09:14:19 - Warning: Query executed extracting entire payroll schema",
+      "2024-12-18 09:14:30 - Blocked: Attempted bulk download connection initiated to external network"
+    ],
+    "connectedAssets": ["Finance Workstations", "Core Application Server", "Corporate File Server", "Cloud Storage S3"],
+    "recommendedAction": "Isolate database network ports from outbound access and block queries returning more than 100 payroll entries."
+  },
+  "n-cloud": {
+    "name": "Cloud Storage Container",
+    "type": "Object Storage Container",
+    "ip": "s3.amazonaws.com",
+    "os": "AWS S3 Services",
+    "department": "Cloud Operations",
+    "criticality": "High",
+    "riskScore": 28,
+    "status": "secure",
+    "vulns": 0,
+    "events": [
+      "2024-12-18 09:14:33 - Data Exfiltration Blocked: Outbound S3 synchronization payload blocked by boundary policy"
+    ],
+    "connectedAssets": ["Production Database Server"],
+    "recommendedAction": "Enable bucket versioning, strict TLS traffic requirements, and block public read access permissions."
+  },
+  "n-siem": {
+    "name": "SIEM Analytics Platform",
+    "type": "SIEM Security Appliance",
+    "ip": "10.50.1.10",
+    "os": "Splunk Enterprise 9.2",
+    "department": "Security Operations Center",
+    "criticality": "Critical",
+    "riskScore": 15,
+    "status": "secure",
+    "vulns": 0,
+    "events": [],
+    "connectedAssets": ["SOC Monitoring Console"],
+    "recommendedAction": "Audit ingestion delays and maintain secondary backup replication logs."
+  },
+  "n-soc": {
+    "name": "SOC Monitoring Center",
+    "type": "Operations Center Console",
+    "ip": "10.50.1.20",
+    "os": "AegisX SOC Dashboard",
+    "department": "Security Operations Center",
+    "criticality": "Critical",
+    "riskScore": 10,
+    "status": "secure",
+    "vulns": 0,
+    "events": [],
+    "connectedAssets": ["SIEM Analytics Platform"],
+    "recommendedAction": "Verify operator shifts, keep browser sockets active, and review automation threshold rules."
+  }
+}

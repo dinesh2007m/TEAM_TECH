@@ -1,0 +1,40 @@
+{
+  "nodes": [
+    { "id": "n-internet", "label": "Internet", "type": "external", "ip": "0.0.0.0/0", "status": "secure", "risk": "low", "criticality": "low", "x": 400, "y": 30, "os": "N/A", "department": "External", "vulns": 0, "events": [] },
+    { "id": "n-email-gw", "label": "Email Gateway", "type": "gateway", "ip": "10.0.1.10", "status": "warning", "risk": "high", "criticality": "high", "x": 200, "y": 130, "os": "Proofpoint SEG", "department": "IT Security", "vulns": 2, "events": ["Phishing email bypassed filter"] },
+    { "id": "n-firewall", "label": "Perimeter Firewall", "type": "security", "ip": "10.0.0.1", "status": "secure", "risk": "low", "criticality": "critical", "x": 400, "y": 130, "os": "Palo Alto PAN-OS 11.1", "department": "Network Security", "vulns": 0, "events": [] },
+    { "id": "n-vpn", "label": "VPN Gateway", "type": "gateway", "ip": "10.0.0.5", "status": "secure", "risk": "moderate", "criticality": "high", "x": 600, "y": 130, "os": "Cisco AnyConnect 4.10", "department": "IT Operations", "vulns": 1, "events": [] },
+    { "id": "n-waf", "label": "Web App Firewall", "type": "security", "ip": "10.0.1.20", "status": "secure", "risk": "low", "criticality": "high", "x": 150, "y": 240, "os": "Cloudflare WAF", "department": "IT Security", "vulns": 0, "events": [] },
+    { "id": "n-idp", "label": "Identity Provider", "type": "identity", "ip": "10.10.1.5", "status": "warning", "risk": "high", "criticality": "critical", "x": 350, "y": 240, "os": "Azure AD / Okta", "department": "Identity Team", "vulns": 1, "events": ["Unusual auth pattern detected"] },
+    { "id": "n-ad", "label": "Active Directory", "type": "identity", "ip": "10.10.1.10", "status": "compromised", "risk": "critical", "criticality": "critical", "x": 500, "y": 240, "os": "Windows Server 2022", "department": "IT Infrastructure", "vulns": 3, "events": ["NTLM hash extraction", "Kerberos ticket anomaly"] },
+    { "id": "n-ws-emp", "label": "Employee Workstations", "type": "endpoint", "ip": "10.20.4.0/24", "status": "compromised", "risk": "critical", "criticality": "high", "x": 120, "y": 360, "os": "Windows 11 Pro 23H2", "department": "Finance", "vulns": 4, "events": ["Macro execution", "PowerShell suspicious"] },
+    { "id": "n-ws-fin", "label": "Finance Workstations", "type": "endpoint", "ip": "10.20.5.0/24", "status": "warning", "risk": "high", "criticality": "high", "x": 280, "y": 360, "os": "Windows 11 Pro 23H2", "department": "Finance", "vulns": 2, "events": ["Lateral movement attempt"] },
+    { "id": "n-ws-hr", "label": "HR Workstations", "type": "endpoint", "ip": "10.20.6.0/24", "status": "secure", "risk": "moderate", "criticality": "moderate", "x": 440, "y": 360, "os": "Windows 11 Pro 23H2", "department": "Human Resources", "vulns": 1, "events": [] },
+    { "id": "n-app-srv", "label": "Application Server", "type": "server", "ip": "10.30.1.20", "status": "secure", "risk": "moderate", "criticality": "high", "x": 600, "y": 360, "os": "Ubuntu 22.04 LTS", "department": "Engineering", "vulns": 1, "events": [] },
+    { "id": "n-file-srv", "label": "File Server", "type": "server", "ip": "10.30.1.30", "status": "warning", "risk": "high", "criticality": "high", "x": 200, "y": 470, "os": "Windows Server 2022", "department": "IT Operations", "vulns": 2, "events": ["Unusual file access pattern"] },
+    { "id": "n-db-srv", "label": "Database Server", "type": "server", "ip": "10.30.2.10", "status": "warning", "risk": "high", "criticality": "critical", "x": 400, "y": 470, "os": "SQL Server 2022", "department": "DBA Team", "vulns": 2, "events": ["Bulk data query anomaly"] },
+    { "id": "n-cloud", "label": "Cloud Storage", "type": "cloud", "ip": "s3.amazonaws.com", "status": "secure", "risk": "moderate", "criticality": "high", "x": 550, "y": 470, "os": "AWS S3 / Azure Blob", "department": "Cloud Ops", "vulns": 0, "events": [] },
+    { "id": "n-siem", "label": "SIEM Platform", "type": "security", "ip": "10.50.1.10", "status": "secure", "risk": "low", "criticality": "critical", "x": 700, "y": 240, "os": "Splunk Enterprise 9.2", "department": "SOC", "vulns": 0, "events": [] },
+    { "id": "n-soc", "label": "SOC Monitoring", "type": "security", "ip": "10.50.1.20", "status": "secure", "risk": "low", "criticality": "critical", "x": 700, "y": 360, "os": "AegisX SOC Console", "department": "SOC", "vulns": 0, "events": [] }
+  ],
+  "connections": [
+    { "from": "n-internet", "to": "n-email-gw", "type": "suspicious", "label": "SMTP" },
+    { "from": "n-internet", "to": "n-firewall", "type": "normal", "label": "HTTPS" },
+    { "from": "n-internet", "to": "n-vpn", "type": "normal", "label": "IPSec" },
+    { "from": "n-email-gw", "to": "n-ws-emp", "type": "attack", "label": "Phishing" },
+    { "from": "n-firewall", "to": "n-waf", "type": "normal", "label": "HTTP/S" },
+    { "from": "n-firewall", "to": "n-idp", "type": "normal", "label": "LDAPS" },
+    { "from": "n-vpn", "to": "n-ad", "type": "normal", "label": "LDAP" },
+    { "from": "n-idp", "to": "n-ad", "type": "suspicious", "label": "Auth" },
+    { "from": "n-ws-emp", "to": "n-ad", "type": "attack", "label": "NTLM" },
+    { "from": "n-ws-emp", "to": "n-file-srv", "type": "attack", "label": "SMB" },
+    { "from": "n-ws-fin", "to": "n-db-srv", "type": "suspicious", "label": "SQL" },
+    { "from": "n-ad", "to": "n-ws-fin", "type": "attack", "label": "Lateral" },
+    { "from": "n-ad", "to": "n-app-srv", "type": "suspicious", "label": "RPC" },
+    { "from": "n-file-srv", "to": "n-db-srv", "type": "attack", "label": "Data" },
+    { "from": "n-db-srv", "to": "n-cloud", "type": "blocked", "label": "Exfil" },
+    { "from": "n-siem", "to": "n-soc", "type": "normal", "label": "Alerts" },
+    { "from": "n-app-srv", "to": "n-db-srv", "type": "normal", "label": "SQL" },
+    { "from": "n-ws-hr", "to": "n-ad", "type": "normal", "label": "Auth" }
+  ]
+}

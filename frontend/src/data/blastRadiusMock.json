@@ -1,0 +1,40 @@
+{
+  "metrics": {
+    "directlyCompromised": 6,
+    "potentiallyAffected": 31,
+    "criticalServices": 4,
+    "highValueDataStores": 3,
+    "estimatedImpact": "$4.2M — $8.7M",
+    "estimatedRecovery": "72 — 120 hours",
+    "containmentScore": 42
+  },
+  "zones": [
+    { "id": "z1", "name": "Directly Compromised", "color": "#EF4444", "assets": 6, "radius": 1 },
+    { "id": "z2", "name": "High-Risk Connected", "color": "#F97316", "assets": 12, "radius": 2 },
+    { "id": "z3", "name": "Potentially Affected", "color": "#F59E0B", "assets": 31, "radius": 3 },
+    { "id": "z4", "name": "Monitored Assets", "color": "#3B82F6", "assets": 78, "radius": 4 }
+  ],
+  "affectedCategories": [
+    { "name": "Endpoints", "affected": 14, "total": 96, "icon": "Monitor" },
+    { "name": "Identity Systems", "affected": 3, "total": 4, "icon": "UserCheck" },
+    { "name": "Application Servers", "affected": 2, "total": 18, "icon": "Server" },
+    { "name": "File Servers", "affected": 2, "total": 4, "icon": "HardDrive" },
+    { "name": "Databases", "affected": 1, "total": 8, "icon": "Database" },
+    { "name": "Cloud Resources", "affected": 0, "total": 22, "icon": "Cloud" },
+    { "name": "Business Apps", "affected": 4, "total": 12, "icon": "AppWindow" }
+  ],
+  "businessImpact": [
+    { "category": "Financial Impact", "severity": "critical", "score": 92, "detail": "Estimated $4.2M–$8.7M in direct costs from credential compromise, regulatory fines, and remediation expenses." },
+    { "category": "Operational Impact", "severity": "high", "score": 78, "detail": "Finance department operations disrupted for 72+ hours. Payroll and accounts payable processes halted." },
+    { "category": "Data Exposure Risk", "severity": "critical", "score": 88, "detail": "PII of 2,400 employees, financial records, and executive compensation data potentially exposed." },
+    { "category": "Regulatory Impact", "severity": "high", "score": 72, "detail": "Mandatory GDPR Article 33 notification, potential SEC disclosure, SOX audit implications." },
+    { "category": "Reputation Risk", "severity": "moderate", "score": 55, "detail": "Internal credential breach may require customer notification if external data was accessed." }
+  ],
+  "whatIfScenarios": {
+    "isolateWorkstation": { "label": "Isolate Compromised Workstation", "riskReduction": 18, "affectedReduction": 8, "containmentBoost": 15 },
+    "isolateDC": { "label": "Isolate Domain Controller", "riskReduction": 25, "affectedReduction": 14, "containmentBoost": 22 },
+    "resetCredentials": { "label": "Reset All Credentials", "riskReduction": 20, "affectedReduction": 6, "containmentBoost": 18 },
+    "firewallRule": { "label": "Apply Firewall Block Rule", "riskReduction": 12, "affectedReduction": 4, "containmentBoost": 10 },
+    "disconnectFileServer": { "label": "Disconnect File Server", "riskReduction": 15, "affectedReduction": 5, "containmentBoost": 12 }
+  }
+}
