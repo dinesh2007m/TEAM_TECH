@@ -1,38 +1,56 @@
 [
   {
     "id": "notif-001",
-    "title": "Critical Ransomware Path Detected",
-    "description": "AI Digital Twin identified active lateral movement path targeting Core DB Subnet-04.",
+    "title": "High Risk Email Quarantined",
+    "description": "Suspicious email from external domain contained obfuscated executable attachment.",
     "time": "2 mins ago",
     "severity": "critical",
     "read": false,
-    "category": "Attack Path"
+    "category": "Email Threat"
   },
   {
     "id": "notif-002",
-    "title": "Unauthorized Privilege Escalation",
-    "description": "Service Account 'svc-k8s-ingress' gained temporary root capability via CVE-2024-38077.",
-    "time": "14 mins ago",
-    "severity": "high",
+    "title": "Credential Theft Attempt Blocked",
+    "description": "Service Account 'svc-k8s-ingress' memory injection attempt stopped at kernel layer.",
+    "time": "8 mins ago",
+    "severity": "critical",
     "read": false,
-    "category": "Identity"
+    "category": "Identity Guard"
   },
   {
     "id": "notif-003",
-    "title": "Digital Twin Sync Completed",
-    "description": "Automated twin snapshot constructed for 1,420 AWS nodes and Azure tenants.",
-    "time": "1 hour ago",
-    "severity": "info",
-    "read": true,
-    "category": "System"
+    "title": "Malicious VBA Macro Detected",
+    "description": "Invoice_9912.xlsm attempted WMI process execution during sandbox run.",
+    "time": "14 mins ago",
+    "severity": "high",
+    "read": false,
+    "category": "Sandbox"
   },
   {
     "id": "notif-004",
-    "title": "Anomaly in Encrypted Traffic",
-    "description": "Unusual outbound payload volume detected to IP 185.220.101.5 (Tor Exit Node).",
-    "time": "3 hours ago",
+    "title": "Encoded PowerShell Execution",
+    "description": "Base64 payload detected on workstation WS-PROD-881. Host isolated.",
+    "time": "32 mins ago",
+    "severity": "high",
+    "read": true,
+    "category": "Host Security"
+  },
+  {
+    "id": "notif-005",
+    "title": "Suspicious Encrypted ZIP File",
+    "description": "Password-protected archive flagged for password brute-forcing in sandbox.",
+    "time": "1 hour ago",
     "severity": "warning",
     "read": true,
-    "category": "Network"
+    "category": "File Scan"
+  },
+  {
+    "id": "notif-006",
+    "title": "AI Twin Analysis Completed",
+    "description": "Simulated 1,420 node cloud topology. 0 critical lateral paths open.",
+    "time": "2 hours ago",
+    "severity": "info",
+    "read": true,
+    "category": "Digital Twin"
   }
 ]

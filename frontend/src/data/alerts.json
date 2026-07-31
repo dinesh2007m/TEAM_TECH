@@ -1,0 +1,69 @@
+[
+  {
+    "id": "ALT-9041",
+    "threat": "Ransomware.LockBit.v3 Lateral Movement",
+    "cve": "CVE-2024-38077",
+    "severity": "critical",
+    "target": "Core DB Subnet-04 (10.0.4.12)",
+    "time": "3 mins ago",
+    "status": "Active",
+    "riskScore": 96,
+    "vector": "Remote Code Execution"
+  },
+  {
+    "id": "ALT-9040",
+    "threat": "Privilege Escalation via K8s Service Account",
+    "cve": "CVE-2024-21626",
+    "severity": "high",
+    "target": "svc-k8s-ingress-prod-02",
+    "time": "14 mins ago",
+    "severity": "high",
+    "status": "Investigating",
+    "riskScore": 84,
+    "vector": "Container Escape"
+  },
+  {
+    "id": "ALT-9039",
+    "threat": "Suspicious Encrypted Payload Exfiltration",
+    "cve": "TOR-EXIT-NODE",
+    "severity": "warning",
+    "target": "185.220.101.5 (Tor Proxy)",
+    "time": "42 mins ago",
+    "status": "Isolated",
+    "riskScore": 68,
+    "vector": "Data Exfiltration"
+  },
+  {
+    "id": "ALT-9038",
+    "threat": "Spear Phishing with Malicious XLSM Macro",
+    "cve": "MAL-MACRO-99",
+    "severity": "high",
+    "target": "cfo-workstation-win11",
+    "time": "1 hour ago",
+    "status": "Remediated",
+    "riskScore": 79,
+    "vector": "Email Ingress"
+  },
+  {
+    "id": "ALT-9037",
+    "threat": "Unauthenticated Redis API Access",
+    "cve": "CVE-2023-39325",
+    "severity": "medium",
+    "target": "redis-cache-cluster-01",
+    "time": "2 hours ago",
+    "status": "Remediated",
+    "riskScore": 52,
+    "vector": "Network Misconfig"
+  },
+  {
+    "id": "ALT-9036",
+    "threat": "Obfuscated PowerShell Script Execution",
+    "cve": "POWERSHELL-ENCODED",
+    "severity": "critical",
+    "target": "domain-controller-01",
+    "time": "3 hours ago",
+    "status": "Active",
+    "riskScore": 92,
+    "vector": "Credential Access"
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "act-001",
+    "title": "Email Uploaded & Queued",
+    "description": "Suspicious email 'Invoice_Urgent_9941.eml' uploaded via API gateway",
+    "timestamp": "14:02:12",
+    "type": "upload",
+    "icon": "UploadCloud",
+    "badge": "COMPLETED",
+    "badgeVariant": "info"
+  },
+  {
+    "id": "act-002",
+    "title": "Digital Twin Created",
+    "description": "Spawned isolated virtual replica node #TWIN-881 for payload detonation",
+    "timestamp": "14:02:18",
+    "type": "digital-twin",
+    "icon": "Cpu",
+    "badge": "ACTIVE",
+    "badgeVariant": "primary"
+  },
+  {
+    "id": "act-003",
+    "title": "Sandbox Detonation Started",
+    "description": "Win11 Pro dynamic memory tracing initialized with kernel hook monitor",
+    "timestamp": "14:02:25",
+    "type": "sandbox",
+    "icon": "Terminal",
+    "badge": "RUNNING",
+    "badgeVariant": "warning"
+  },
+  {
+    "id": "act-004",
+    "title": "VBA Macro Executed",
+    "description": "Payload spawned powershell.exe -EncodedCommand via WMI Win32_Process",
+    "timestamp": "14:02:34",
+    "type": "macro",
+    "icon": "Zap",
+    "badge": "MALICIOUS",
+    "badgeVariant": "danger"
+  },
+  {
+    "id": "act-005",
+    "title": "Credential Access Attempt",
+    "description": "Attempted memory dump of lsass.exe process blocked by Aegis Guard",
+    "timestamp": "14:02:41",
+    "type": "credential",
+    "icon": "Key",
+    "badge": "BLOCKED",
+    "badgeVariant": "danger"
+  },
+  {
+    "id": "act-006",
+    "title": "AI Threat Report Generated",
+    "description": "Constructed MITRE ATT&CK mapping graph & automated mitigation patch",
+    "timestamp": "14:03:05",
+    "type": "report",
+    "icon": "FileText",
+    "badge": "GENERATED",
+    "badgeVariant": "success"
+  }
+]

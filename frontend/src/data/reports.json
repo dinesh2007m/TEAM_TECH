@@ -1,0 +1,46 @@
+[
+  {
+    "id": "REP-2026-081",
+    "filename": "Q3_AWS_VPC_Threat_Graph_Audit.pdf",
+    "riskScore": 92,
+    "severity": "critical",
+    "threatType": "Ransomware & IAM Escalation",
+    "status": "Final Audit Approved",
+    "generatedTime": "Today at 13:45",
+    "fileSize": "4.2 MB",
+    "author": "AI Digital Twin Agent #4"
+  },
+  {
+    "id": "REP-2026-080",
+    "filename": "Malware_Sandbox_Execution_EML_99.pdf",
+    "riskScore": 78,
+    "severity": "high",
+    "threatType": "Spear Phishing XLSM Macro",
+    "status": "Quarantine Verified",
+    "generatedTime": "Today at 11:20",
+    "fileSize": "2.8 MB",
+    "author": "Dynamic Sandbox Engine"
+  },
+  {
+    "id": "REP-2026-079",
+    "filename": "K8s_Cluster_RBAC_Escape_Analysis.pdf",
+    "riskScore": 64,
+    "severity": "warning",
+    "threatType": "Container Privilege Abuse",
+    "status": "Action Pending",
+    "generatedTime": "Yesterday at 18:30",
+    "fileSize": "5.1 MB",
+    "author": "Security Graph Scanner"
+  },
+  {
+    "id": "REP-2026-078",
+    "filename": "Executive_CISO_Weekly_Risk_Scorecard.pdf",
+    "riskScore": 24,
+    "severity": "success",
+    "threatType": "Enterprise Baseline Score",
+    "status": "Archived",
+    "generatedTime": "Jul 29, 2026",
+    "fileSize": "1.4 MB",
+    "author": "SOC Automated Reporter"
+  }
+]
