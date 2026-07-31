@@ -1,0 +1,69 @@
+[
+  {
+    "id": "dashboard",
+    "title": "Dashboard",
+    "path": "/dashboard",
+    "icon": "LayoutDashboard",
+    "badge": null,
+    "category": "Main"
+  },
+  {
+    "id": "upload",
+    "title": "Upload Scan",
+    "path": "/upload",
+    "icon": "UploadCloud",
+    "badge": "NEW",
+    "badgeVariant": "primary",
+    "category": "Main"
+  },
+  {
+    "id": "digital-twin",
+    "title": "Digital Twin",
+    "path": "/digital-twin",
+    "icon": "Cpu",
+    "badge": "LIVE",
+    "badgeVariant": "success",
+    "category": "Simulation"
+  },
+  {
+    "id": "attack-graph",
+    "title": "Attack Graph",
+    "path": "/attack-graph",
+    "icon": "GitFork",
+    "badge": "AI",
+    "badgeVariant": "warning",
+    "category": "Simulation"
+  },
+  {
+    "id": "reports",
+    "title": "Reports",
+    "path": "/reports",
+    "icon": "FileText",
+    "badge": null,
+    "category": "Intelligence"
+  },
+  {
+    "id": "history",
+    "title": "Scan History",
+    "path": "/history",
+    "icon": "History",
+    "badge": null,
+    "category": "Intelligence"
+  },
+  {
+    "id": "analytics",
+    "title": "Threat Analytics",
+    "path": "/analytics",
+    "icon": "BarChart3",
+    "badge": null,
+    "category": "Intelligence"
+  },
+  {
+    "id": "settings",
+    "title": "Settings",
+    "path": "/settings",
+    "icon": "Settings",
+    "badge": null,
+    "category": "System"
+  }
+]

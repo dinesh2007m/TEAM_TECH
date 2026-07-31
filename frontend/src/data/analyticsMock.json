@@ -1,0 +1,16 @@
+{
+  "threatTrends": [
+    { "timestamp": "00:00", "critical": 4, "high": 12, "medium": 24, "low": 45 },
+    { "timestamp": "04:00", "critical": 6, "high": 15, "medium": 22, "low": 40 },
+    { "timestamp": "08:00", "critical": 3, "high": 9, "medium": 28, "low": 52 },
+    { "timestamp": "12:00", "critical": 8, "high": 21, "medium": 35, "low": 60 },
+    { "timestamp": "16:00", "critical": 12, "high": 18, "medium": 30, "low": 48 },
+    { "timestamp": "20:00", "critical": 5, "high": 14, "medium": 25, "low": 42 }
+  ],
+  "attackVectorDistribution": [
+    { "name": "Cloud Misconfig", "value": 38, "color": "#3B82F6" },
+    { "name": "Vulnerable Dependencies", "value": 27, "color": "#EF4444" },
+    { "name": "Exposed Identity Keys", "value": 18, "color": "#F59E0B" },
+    { "name": "Unpatched CVEs", "value": 17, "color": "#22C55E" }
+  ]
+}

@@ -1,0 +1,46 @@
+[
+  {
+    "id": "stat-001",
+    "title": "Threat Exposure Score",
+    "value": "84 / 100",
+    "status": "High Risk",
+    "change": "+4.2%",
+    "trend": "up",
+    "variant": "danger",
+    "icon": "ShieldAlert",
+    "subtitle": "vs previous 24h baseline"
+  },
+  {
+    "id": "stat-002",
+    "title": "Active Attack Paths",
+    "value": "12",
+    "status": "Action Required",
+    "change": "-3",
+    "trend": "down",
+    "variant": "warning",
+    "icon": "GitFork",
+    "subtitle": "4 critical, 8 high priority"
+  },
+  {
+    "id": "stat-003",
+    "title": "Protected Digital Twin Assets",
+    "value": "14,892",
+    "status": "Syncing",
+    "change": "+1,240",
+    "trend": "up",
+    "variant": "success",
+    "icon": "Cpu",
+    "subtitle": "Across AWS, Azure, K8s"
+  },
+  {
+    "id": "stat-004",
+    "title": "Mean Time to Remediate (MTTR)",
+    "value": "14m 22s",
+    "status": "Optimal",
+    "change": "-18%",
+    "trend": "down",
+    "variant": "primary",
+    "icon": "Zap",
+    "subtitle": "Automated playbooks active"
+  }
+]

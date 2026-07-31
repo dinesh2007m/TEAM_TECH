@@ -1,0 +1,38 @@
+{
+  "nodes": [
+    {
+      "id": "node-1",
+      "type": "input",
+      "data": { "label": "External Attacker (Tor Exit 185.220.101.5)", "severity": "critical", "type": "Threat Vector" },
+      "position": { "x": 100, "y": 150 }
+    },
+    {
+      "id": "node-2",
+      "data": { "label": "Public NGINX Gateway (CVE-2024-38077)", "severity": "high", "type": "Vulnerability" },
+      "position": { "x": 350, "y": 150 }
+    },
+    {
+      "id": "node-3",
+      "data": { "label": "Kubernetes Ingress Pod (svc-k8s-ingress)", "severity": "high", "type": "Compromised Node" },
+      "position": { "x": 600, "y": 80 }
+    },
+    {
+      "id": "node-4",
+      "data": { "label": "IAM Privilege Escalation (Role: EC2-FullAccess)", "severity": "critical", "type": "Identity Risk" },
+      "position": { "x": 600, "y": 220 }
+    },
+    {
+      "id": "node-5",
+      "type": "output",
+      "data": { "label": "Production PostgreSQL Cluster (Customer PII)", "severity": "critical", "type": "Crown Jewel Asset" },
+      "position": { "x": 880, "y": 150 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "node-1", "target": "node-2", "animated": true, "label": "HTTP Exploitation" },
+    { "id": "e2-3", "source": "node-2", "target": "node-3", "animated": true, "label": "Remote Code Exec" },
+    { "id": "e2-4", "source": "node-2", "target": "node-4", "animated": true, "label": "Token Steal" },
+    { "id": "e3-5", "source": "node-3", "target": "node-5", "animated": true, "label": "SQL Connection" },
+    { "id": "e4-5", "source": "node-4", "target": "node-5", "animated": true, "label": "S3 Data Exfil" }
+  ]
+}

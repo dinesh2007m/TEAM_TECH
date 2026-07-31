@@ -1,0 +1,38 @@
+[
+  {
+    "id": "notif-001",
+    "title": "Critical Ransomware Path Detected",
+    "description": "AI Digital Twin identified active lateral movement path targeting Core DB Subnet-04.",
+    "time": "2 mins ago",
+    "severity": "critical",
+    "read": false,
+    "category": "Attack Path"
+  },
+  {
+    "id": "notif-002",
+    "title": "Unauthorized Privilege Escalation",
+    "description": "Service Account 'svc-k8s-ingress' gained temporary root capability via CVE-2024-38077.",
+    "time": "14 mins ago",
+    "severity": "high",
+    "read": false,
+    "category": "Identity"
+  },
+  {
+    "id": "notif-003",
+    "title": "Digital Twin Sync Completed",
+    "description": "Automated twin snapshot constructed for 1,420 AWS nodes and Azure tenants.",
+    "time": "1 hour ago",
+    "severity": "info",
+    "read": true,
+    "category": "System"
+  },
+  {
+    "id": "notif-004",
+    "title": "Anomaly in Encrypted Traffic",
+    "description": "Unusual outbound payload volume detected to IP 185.220.101.5 (Tor Exit Node).",
+    "time": "3 hours ago",
+    "severity": "warning",
+    "read": true,
+    "category": "Network"
+  }
+]
