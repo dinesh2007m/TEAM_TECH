@@ -1,0 +1,70 @@
+/**
+ * emailService.js
+ * ---------------
+ * API service layer for the Email Upload endpoint.
+ * All communication with the FastAPI backend is centralised here.
+ *
+ * Backend: POST http://127.0.0.1:8000/api/v1/upload/email
+ */
+
+const API_BASE_URL = 'http://127.0.0.1:8000';
+
+/**
+ * Uploads an .eml file to the backend for parsing.
+ *
+ * @param {File} file  - The .eml File object selected by the user.
+ * @returns {Promise<{ status: string, email_id: string, parsed_email: object }>}
+ * @throws {Error} with a user-friendly message on any failure.
+ */
+export async function uploadEmailFile(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  console.log('[emailService] Uploading file:', file.name, `(${file.size} bytes)`);
+
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/upload/email`, {
+      method: 'POST',
+      body: formData,
+      // Do NOT set Content-Type header — the browser sets it automatically
+      // including the correct multipart boundary.
+    });
+  } catch (networkError) {
+    console.error('[emailService] Network error:', networkError);
+    throw new Error(
+      'Cannot reach the server. Make sure the backend is running at http://127.0.0.1:8000.'
+    );
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error('Server returned an unreadable response. Please try again.');
+  }
+
+  console.log('[emailService] Response:', response.status, data);
+
+  if (!response.ok) {
+    // FastAPI validation errors (422) have a different shape
+    const detail =
+      data?.detail ||
+      (Array.isArray(data?.detail)
+        ? data.detail.map((e) => e.msg).join(', ')
+        : null);
+
+    if (response.status === 400) {
+      throw new Error(detail || 'Bad request. The file may be invalid or malformed.');
+    }
+    if (response.status === 422) {
+      throw new Error(detail || 'Validation failed. Check file type and size.');
+    }
+    if (response.status >= 500) {
+      throw new Error('Server error. The backend encountered an unexpected problem.');
+    }
+    throw new Error(detail || `Unexpected error (HTTP ${response.status}).`);
+  }
+
+  return data;
+}

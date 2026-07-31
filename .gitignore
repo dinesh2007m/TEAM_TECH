@@ -10,3 +10,8 @@ reports/
 .coverage
 *.sqlite3
 *.db
+node_modules/
+frontend/node_modules/
+frontend/node_modules/.vite/
+dist/
+build/
