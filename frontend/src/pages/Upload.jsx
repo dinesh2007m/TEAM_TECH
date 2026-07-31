@@ -15,6 +15,10 @@ import {
   CheckCircle2,
   ShieldAlert,
   FileCheck,
+  ShieldCheck,
+  ShieldX,
+  Loader2,
+  Activity,
 } from 'lucide-react';
 
 import { PageHeader } from '../components/ui/PageHeader';
@@ -22,7 +26,7 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { useToast } from '../hooks/useToast';
-import { uploadEmailFile } from '../services/emailService';
+import { uploadEmailFile, analyzePhishing } from '../services/emailService';
 import { fadeUp, staggerContainer, staggerItem } from '../utils/animations';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -260,6 +264,9 @@ export const Upload = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [parsedEmail, setParsedEmail] = useState(null);
   const [emailId, setEmailId] = useState(null);
+  // Phase 3 – phishing analysis
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [phishingResult, setPhishingResult] = useState(null);
 
   // ── Validate file client-side ──────────────────────────────────────────────
   const validateFile = useCallback((file) => {
@@ -294,6 +301,7 @@ export const Upload = () => {
     setValidationError('');
     setParsedEmail(null);
     setEmailId(null);
+    setPhishingResult(null);
   }, []);
 
   // ── Upload ─────────────────────────────────────────────────────────────────
@@ -312,11 +320,13 @@ export const Upload = () => {
     setValidationError('');
     setIsUploading(true);
     setParsedEmail(null);
+    setPhishingResult(null);
     console.log('[Upload] Uploading...');
 
     try {
+      // ── Step 1: Upload & parse the .eml file ─────────────────────────────
       const data = await uploadEmailFile(selectedFile);
-      console.log('[Upload] Response:', data);
+      console.log('[Upload] Upload response:', data);
 
       setParsedEmail(data.parsed_email);
       setEmailId(data.email_id);
@@ -326,8 +336,35 @@ export const Upload = () => {
         description: `Email ID: ${data.email_id}`,
         type: 'success',
       });
+
+      // ── Step 2: Automatically run phishing analysis ───────────────────────
+      setIsUploading(false);
+      setIsAnalyzing(true);
+      console.log('[Upload] Running phishing analysis...');
+
+      try {
+        const analysis = await analyzePhishing(data.parsed_email);
+        console.log('[Upload] Phishing analysis response:', analysis);
+        setPhishingResult(analysis);
+        addToast({
+          title: 'Phishing Analysis Complete',
+          description: `${analysis.indicator_count} indicator(s) detected · Risk: ${analysis.risk_level}`,
+          type: analysis.risk_level === 'High' ? 'error' : analysis.risk_level === 'Medium' ? 'warning' : 'success',
+          duration: 6000,
+        });
+      } catch (analysisErr) {
+        console.error('[Upload] Phishing analysis error:', analysisErr);
+        addToast({
+          title: 'Phishing Analysis Failed',
+          description: analysisErr.message,
+          type: 'error',
+          duration: 6000,
+        });
+      } finally {
+        setIsAnalyzing(false);
+      }
     } catch (err) {
-      console.error('[Upload] Error:', err);
+      console.error('[Upload] Upload error:', err);
       setValidationError(err.message || 'An unexpected error occurred.');
       addToast({
         title: 'Upload Failed',
@@ -335,12 +372,11 @@ export const Upload = () => {
         type: 'error',
         duration: 6000,
       });
-    } finally {
       setIsUploading(false);
     }
   }, [selectedFile, validateFile, addToast]);
 
-  const canUpload = selectedFile && !validationError && !isUploading;
+  const canUpload = selectedFile && !validationError && !isUploading && !isAnalyzing;
 
   return (
     <div className="space-y-6">
@@ -386,14 +422,14 @@ export const Upload = () => {
             <Button
               variant="cyber"
               size="lg"
-              leftIcon={isUploading ? undefined : Send}
-              isLoading={isUploading}
+              leftIcon={isUploading || isAnalyzing ? undefined : Send}
+              isLoading={isUploading || isAnalyzing}
               isDisabled={!canUpload}
               onClick={handleUpload}
               glow={canUpload}
               id="upload-submit-button"
             >
-              {isUploading ? 'Uploading...' : 'Upload & Analyse'}
+              {isUploading ? 'Uploading...' : isAnalyzing ? 'Analysing...' : 'Upload & Analyse'}
             </Button>
           </div>
         </div>
@@ -482,6 +518,155 @@ export const Upload = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── Phishing Analysis Loading ──────────────────────────────────── */}
+      <AnimatePresence>
+        {isAnalyzing && (
+          <motion.div
+            key="analyzing"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card>
+              <div className="flex items-center justify-center gap-4 py-6">
+                <Loader2 className="w-6 h-6 text-blue-400 animate-spin shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-gray-200">Running Phishing Analysis…</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Checking 15 detection rules against the parsed email</p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Phishing Analysis Results ──────────────────────────────────── */}
+      <AnimatePresence>
+        {phishingResult && (
+          <motion.div
+            key="phishing-results"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-4"
+          >
+            {/* Section header */}
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="w-5 h-5 text-cyan-400" />
+              <h2 className="text-base font-semibold text-gray-200">Phishing Analysis Results</h2>
+            </div>
+
+            {/* ── Risk Summary Card ── */}
+            <PhishingRiskSummary
+              riskLevel={phishingResult.risk_level}
+              indicatorCount={phishingResult.indicator_count}
+            />
+
+            {/* ── Indicator Cards ── */}
+            {phishingResult.indicators?.length > 0 && (
+              <motion.div
+                variants={staggerContainer}
+                initial="initial"
+                animate="animate"
+                className="space-y-3"
+              >
+                {phishingResult.indicators.map((indicator, i) => (
+                  <motion.div key={i} variants={staggerItem}>
+                    <PhishingIndicatorCard indicator={indicator} />
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+
+            {phishingResult.indicators?.length === 0 && (
+              <Card className="border-green-500/20 bg-green-500/5">
+                <div className="flex items-center gap-3 py-2">
+                  <ShieldCheck className="w-5 h-5 text-green-400 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-green-300">No Phishing Indicators Detected</p>
+                    <p className="text-xs text-gray-500 mt-0.5">This email passed all 15 detection rules.</p>
+                  </div>
+                </div>
+              </Card>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
+  );
+};
+
+// ─── Phishing Risk Summary Card ───────────────────────────────────────────────
+const RISK_CONFIG = {
+  High:   { bg: 'bg-red-500/10',    border: 'border-red-500/30',    text: 'text-red-300',    badge: 'danger',   icon: ShieldX },
+  Medium: { bg: 'bg-amber-500/10',  border: 'border-amber-500/30',  text: 'text-amber-300',  badge: 'warning',  icon: ShieldAlert },
+  Low:    { bg: 'bg-green-500/10',  border: 'border-green-500/30',  text: 'text-green-300',  badge: 'success',  icon: ShieldCheck },
+};
+
+const PhishingRiskSummary = ({ riskLevel, indicatorCount }) => {
+  const cfg = RISK_CONFIG[riskLevel] ?? RISK_CONFIG.Low;
+  const RiskIcon = cfg.icon;
+  return (
+    <Card noPadding className={`${cfg.bg} ${cfg.border}`}>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-5 px-6 py-5">
+        {/* Icon */}
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border ${cfg.border} ${cfg.bg}`}>
+          <RiskIcon className={`w-7 h-7 ${cfg.text}`} />
+        </div>
+
+        {/* Labels */}
+        <div className="flex-1 space-y-1">
+          <p className="text-xs text-gray-500 font-mono uppercase tracking-widest">Overall Risk Level</p>
+          <p className={`text-3xl font-extrabold tracking-tight font-heading ${cfg.text}`}>
+            {riskLevel.toUpperCase()}
+          </p>
+        </div>
+
+        {/* Divider */}
+        <div className="hidden sm:block w-px h-12 bg-gray-700/60" />
+
+        {/* Count */}
+        <div className="space-y-1 sm:text-right">
+          <p className="text-xs text-gray-500 font-mono uppercase tracking-widest">Indicators Found</p>
+          <div className="flex sm:justify-end items-center gap-2">
+            <Activity className="w-4 h-4 text-gray-400" />
+            <p className="text-3xl font-extrabold tracking-tight text-gray-100 font-heading">
+              {indicatorCount}
+            </p>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+// ─── Single Indicator Card ────────────────────────────────────────────────────
+const SEVERITY_STYLE = {
+  High:   { badge: 'danger',   bar: 'bg-red-500',    label: 'text-red-400' },
+  Medium: { badge: 'warning',  bar: 'bg-amber-500',   label: 'text-amber-400' },
+  Low:    { badge: 'success',  bar: 'bg-green-500',   label: 'text-green-400' },
+};
+
+const PhishingIndicatorCard = ({ indicator }) => {
+  const sty = SEVERITY_STYLE[indicator.severity] ?? SEVERITY_STYLE.Low;
+  return (
+    <Card noPadding hoverEffect={false} glowOnHover={false}>
+      {/* Left severity accent bar */}
+      <div className="flex items-stretch">
+        <div className={`w-1 rounded-l-xl shrink-0 ${sty.bar}`} />
+        <div className="flex-1 px-5 py-4">
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <p className="text-sm font-semibold text-gray-100">{indicator.name}</p>
+            <Badge variant={sty.badge} size="sm" className="shrink-0">
+              {indicator.severity}
+            </Badge>
+          </div>
+          <p className="text-xs text-gray-400 leading-relaxed">{indicator.reason}</p>
+        </div>
+      </div>
+    </Card>
   );
 };

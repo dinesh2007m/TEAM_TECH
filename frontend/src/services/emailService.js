@@ -68,3 +68,50 @@ export async function uploadEmailFile(file) {
 
   return data;
 }
+
+/**
+ * Sends a parsed email object to the phishing detection engine.
+ *
+ * @param {object} parsedEmail - The parsed_email object returned by uploadEmailFile.
+ * @returns {Promise<{ status: string, indicator_count: number, risk_level: string, indicators: Array }>}
+ * @throws {Error} with a user-friendly message on any failure.
+ */
+export async function analyzePhishing(parsedEmail) {
+  console.log('[emailService] Sending to phishing analyzer…');
+
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/phishing/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(parsedEmail),
+    });
+  } catch (networkError) {
+    console.error('[emailService] Phishing API network error:', networkError);
+    throw new Error(
+      'Cannot reach the phishing analysis server. Make sure the backend is running.'
+    );
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error('Phishing analysis returned an unreadable response. Please try again.');
+  }
+
+  console.log('[emailService] Phishing response:', response.status, data);
+
+  if (!response.ok) {
+    const detail =
+      typeof data?.detail === 'string'
+        ? data.detail
+        : Array.isArray(data?.detail)
+        ? data.detail.map((e) => e.msg).join(', ')
+        : `HTTP ${response.status}`;
+
+    throw new Error(detail || 'Phishing analysis failed. Please try again.');
+  }
+
+  return data;
+}
