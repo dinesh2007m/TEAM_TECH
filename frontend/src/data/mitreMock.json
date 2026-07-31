@@ -1,0 +1,94 @@
+{
+  "techniques": [
+    {
+      "id": "T1566",
+      "subId": null,
+      "name": "Phishing",
+      "tactic": "Initial Access",
+      "tacticId": "TA0001",
+      "confidence": 99,
+      "description": "Adversary sent a spearphishing email with a macro-enabled document attachment to gain initial access. The email spoofed a legitimate finance vendor and used urgency language to compel the user to open the attachment."
+    },
+    {
+      "id": "T1566",
+      "subId": "T1566.001",
+      "name": "Spearphishing Attachment",
+      "tactic": "Initial Access",
+      "tacticId": "TA0001",
+      "confidence": 99,
+      "description": "Specifically a spearphishing email with a malicious Office document attachment. The document required macro enablement which triggered the attack chain."
+    },
+    {
+      "id": "T1204",
+      "subId": "T1204.002",
+      "name": "Malicious File Execution",
+      "tactic": "Execution",
+      "tacticId": "TA0002",
+      "confidence": 97,
+      "description": "The end user opened the malicious Word document and clicked 'Enable Content', directly executing the embedded VBA macro payload."
+    },
+    {
+      "id": "T1059",
+      "subId": "T1059.001",
+      "name": "PowerShell",
+      "tactic": "Execution",
+      "tacticId": "TA0002",
+      "confidence": 94,
+      "description": "The VBA macro invoked PowerShell with an encoded command using -EncodedCommand and -WindowStyle Hidden flags to download and execute the second-stage payload while evading user visibility."
+    },
+    {
+      "id": "T1547",
+      "subId": "T1547.001",
+      "name": "Registry Run Keys / Startup Folder",
+      "tactic": "Persistence",
+      "tacticId": "TA0003",
+      "confidence": 91,
+      "description": "Malware established persistence by writing to HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run registry key with a disguised entry named 'AdobeUpdater'."
+    },
+    {
+      "id": "T1055",
+      "subId": "T1055.001",
+      "name": "Dynamic-link Library Injection",
+      "tactic": "Defense Evasion",
+      "tacticId": "TA0005",
+      "confidence": 86,
+      "description": "Emotet loader injected malicious DLL into svchost.exe process memory to mask its network activity as legitimate Windows system traffic."
+    },
+    {
+      "id": "T1003",
+      "subId": "T1003.001",
+      "name": "LSASS Memory",
+      "tactic": "Credential Access",
+      "tacticId": "TA0006",
+      "confidence": 89,
+      "description": "Malware accessed LSASS process memory to extract NTLM credential hashes and Kerberos ticket data for use in lateral movement."
+    },
+    {
+      "id": "T1539",
+      "subId": null,
+      "name": "Steal Web Session Cookie",
+      "tactic": "Credential Access",
+      "tacticId": "TA0006",
+      "confidence": 84,
+      "description": "The malware accessed Chrome and Microsoft Edge profile directories to steal browser session cookies enabling account takeover without knowing the user's password."
+    },
+    {
+      "id": "T1071",
+      "subId": "T1071.001",
+      "name": "Web Protocols",
+      "tactic": "Command and Control",
+      "tacticId": "TA0011",
+      "confidence": 93,
+      "description": "C2 communications disguised as HTTPS web traffic to attacker-controlled domains. Traffic pattern uses custom binary protocol over port 443 to evade DPI inspection."
+    },
+    {
+      "id": "T1041",
+      "subId": null,
+      "name": "Exfiltration Over C2 Channel",
+      "tactic": "Exfiltration",
+      "tacticId": "TA0010",
+      "confidence": 88,
+      "description": "Harvested credentials, browser cookies, and file system content were compressed and scheduled for exfiltration through the established C2 channel to 185.220.101.47:443."
+    }
+  ]
+}

@@ -1,0 +1,209 @@
+{
+  "analysis": {
+    "reportId": "AX-2024-1218-0047",
+    "filename": "Invoice_Q4_2024_Payroll.docm",
+    "fileExtension": ".docm",
+    "fileType": "Microsoft Word Macro-Enabled Document",
+    "fileSize": "2.4 MB",
+    "fileSizeBytes": 2516582,
+    "fileSource": "External Email Attachment",
+    "uploadTime": "2024-12-18T09:14:33Z",
+    "scanTime": "2024-12-18T09:15:47Z",
+    "analysisStatus": "Complete",
+    "riskScore": 87,
+    "riskLevel": "Critical",
+    "threatLevel": "Critical",
+    "threatFamily": "Emotet + PowerShell Dropper",
+    "threatCategory": "Macro-Based Downloader",
+    "aiConfidence": 94,
+    "analyst": "AegisX AI Engine v4.2",
+    "hashes": {
+      "md5": "a1b2c3d4e5f67890abcdef1234567890",
+      "sha1": "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b",
+      "sha256": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8c3f7b9a21e"
+    },
+    "suspiciousBehaviors": [
+      {
+        "id": "beh-001",
+        "name": "Malicious Macro Detected",
+        "icon": "Code2",
+        "severity": "critical",
+        "confidence": 97,
+        "explanation": "VBA macro with Auto_Open subroutine detected. The macro initiates a multi-stage payload download chain upon document open.",
+        "status": "confirmed"
+      },
+      {
+        "id": "beh-002",
+        "name": "Encoded PowerShell Command",
+        "icon": "Terminal",
+        "severity": "critical",
+        "confidence": 94,
+        "explanation": "Base64-encoded PowerShell execution string found embedded in VBA macro body. Decodes to a staged payload downloader targeting C2 infrastructure.",
+        "status": "confirmed"
+      },
+      {
+        "id": "beh-003",
+        "name": "Credential Dump Attempt",
+        "icon": "KeyRound",
+        "severity": "high",
+        "confidence": 89,
+        "explanation": "LSASS memory access pattern predicted based on behavioral simulation. Mimikatz-style credential dumping technique identified.",
+        "status": "predicted"
+      },
+      {
+        "id": "beh-004",
+        "name": "Registry Modification",
+        "icon": "Settings2",
+        "severity": "high",
+        "confidence": 91,
+        "explanation": "Persistence mechanism via HKCU Run key modification detected. Ensures malware survives system restart.",
+        "status": "confirmed"
+      },
+      {
+        "id": "beh-005",
+        "name": "Persistence Attempt",
+        "icon": "RefreshCcw",
+        "severity": "high",
+        "confidence": 88,
+        "explanation": "Scheduled task creation via schtasks.exe predicted. Establishes recurring execution of secondary payload.",
+        "status": "predicted"
+      },
+      {
+        "id": "beh-006",
+        "name": "Network Beacon",
+        "icon": "Wifi",
+        "severity": "high",
+        "confidence": 92,
+        "explanation": "C2 beaconing to 185.220.101.47:443 with HTTPS traffic over Tor exit node. Periodic check-in pattern consistent with Emotet botnet.",
+        "status": "confirmed"
+      },
+      {
+        "id": "beh-007",
+        "name": "DLL Injection",
+        "icon": "Layers",
+        "severity": "critical",
+        "confidence": 86,
+        "explanation": "Process hollowing and DLL injection into svchost.exe detected. Allows malware to masquerade as legitimate Windows service.",
+        "status": "predicted"
+      },
+      {
+        "id": "beh-008",
+        "name": "Command and Control Activity",
+        "icon": "Radio",
+        "severity": "critical",
+        "confidence": 93,
+        "explanation": "Active C2 communication protocol identified. Encrypted communications using custom binary protocol over HTTPS to attacker-controlled infrastructure.",
+        "status": "confirmed"
+      }
+    ],
+    "aiAssessment": {
+      "executiveSummary": "AegisX AI Engine has identified this file as a highly sophisticated, multi-stage malware delivery document attributed to the Emotet threat actor group. The document employs obfuscated VBA macros to execute a PowerShell-based downloader that communicates with known command-and-control infrastructure. This threat poses a critical risk to enterprise operations, sensitive data integrity, and business continuity.",
+      "whySuspicious": "The file contains an auto-executing VBA macro that triggers upon document open, decodes a base64-encoded PowerShell script, and initiates an HTTP-based payload download from attacker-controlled domains. The macro code exhibits multiple layers of obfuscation consistent with Emotet campaign tooling. Hash analysis confirms this file is linked to active threat campaigns (Campaign ID: EMO-2024-Q4-089).",
+      "probableObjective": "Initial access and persistence establishment for secondary payload deployment. The primary objective is credential theft targeting enterprise user accounts, browser-stored credentials, and Windows authentication tokens. Secondary objective is lateral movement across the corporate network.",
+      "attackerSophistication": "Advanced — Nation-state affiliated or sponsored cybercriminal organization. The malware demonstrates sandbox evasion, anti-analysis techniques, and uses Tor-based C2 infrastructure indicating a high-capability threat actor.",
+      "businessImpact": "Potential for complete credential compromise affecting all Active Directory accounts. Risk of sensitive financial data exfiltration. Ransomware deployment as secondary payload is assessed as high probability. Estimated business impact if fully executed: $2.4M–$8.7M in direct losses and regulatory penalties.",
+      "recommendedActions": [
+        "Immediately isolate the affected endpoint from network access",
+        "Preserve memory dump and disk image for forensic investigation",
+        "Reset all credentials for the targeted user account",
+        "Block C2 domains and IP addresses at perimeter firewall",
+        "Scan all email accounts for similar attachments from the same sender domain",
+        "Engage incident response team for full enterprise-wide threat hunt"
+      ],
+      "analystPriority": "P1 — Critical",
+      "containmentDecision": "ISOLATE IMMEDIATELY — Do not execute, forward, or open this file. Quarantine endpoint and preserve forensic evidence."
+    },
+    "attackTimeline": [
+      {
+        "id": "tl-001",
+        "event": "Email Received",
+        "description": "Spearphishing email delivered to finance@company.com from billing@acc0unting-dept.com",
+        "timestamp": "2024-12-18T08:47:22Z",
+        "severity": "info",
+        "status": "confirmed",
+        "icon": "Mail"
+      },
+      {
+        "id": "tl-002",
+        "event": "ZIP Extracted",
+        "description": "User extracted password-protected ZIP attachment using provided password from email body",
+        "timestamp": "2024-12-18T09:12:05Z",
+        "severity": "warning",
+        "status": "confirmed",
+        "icon": "Archive"
+      },
+      {
+        "id": "tl-003",
+        "event": "DOCM Executed",
+        "description": "Macro-enabled document opened in Microsoft Word on endpoint WS-FIN-042",
+        "timestamp": "2024-12-18T09:13:18Z",
+        "severity": "warning",
+        "status": "confirmed",
+        "icon": "FileText"
+      },
+      {
+        "id": "tl-004",
+        "event": "Macro Enabled",
+        "description": "User clicked 'Enable Content' prompt, activating VBA macro execution context",
+        "timestamp": "2024-12-18T09:13:24Z",
+        "severity": "critical",
+        "status": "confirmed",
+        "icon": "Play"
+      },
+      {
+        "id": "tl-005",
+        "event": "PowerShell Spawned",
+        "description": "WINWORD.EXE spawned powershell.exe with -WindowStyle Hidden -EncodedCommand flag",
+        "timestamp": "2024-12-18T09:13:27Z",
+        "severity": "critical",
+        "status": "confirmed",
+        "icon": "Terminal"
+      },
+      {
+        "id": "tl-006",
+        "event": "Credential Access",
+        "description": "PowerShell process accessed LSASS memory to extract NTLM hashes and Kerberos tickets",
+        "timestamp": "2024-12-18T09:13:45Z",
+        "severity": "critical",
+        "status": "predicted",
+        "icon": "KeyRound"
+      },
+      {
+        "id": "tl-007",
+        "event": "Browser Cookie Theft",
+        "description": "Malware accessed Chrome and Edge profile directories to exfiltrate session cookies and saved passwords",
+        "timestamp": "2024-12-18T09:14:02Z",
+        "severity": "critical",
+        "status": "predicted",
+        "icon": "Cookie"
+      },
+      {
+        "id": "tl-008",
+        "event": "Sensitive Files Accessed",
+        "description": "File system enumeration targeting Documents, Desktop, and Finance shared drive contents",
+        "timestamp": "2024-12-18T09:14:19Z",
+        "severity": "high",
+        "status": "predicted",
+        "icon": "FolderOpen"
+      },
+      {
+        "id": "tl-009",
+        "event": "Data Exfiltration Attempt",
+        "description": "Compressed archive of harvested credentials and documents attempted transmission to 185.220.101.47:443",
+        "timestamp": "2024-12-18T09:14:33Z",
+        "severity": "critical",
+        "status": "blocked",
+        "icon": "Upload"
+      },
+      {
+        "id": "tl-010",
+        "event": "Threat Blocked",
+        "description": "AegisX endpoint agent quarantined process and blocked outbound C2 communication. File flagged for analysis.",
+        "timestamp": "2024-12-18T09:14:47Z",
+        "severity": "success",
+        "status": "blocked",
+        "icon": "ShieldCheck"
+      }
+    ]
+  }
+}

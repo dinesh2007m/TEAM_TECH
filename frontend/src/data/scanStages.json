@@ -1,0 +1,137 @@
+{
+  "stages": [
+    {
+      "id": 1,
+      "name": "File Validation",
+      "description": "Verifying file integrity, MIME type, and structural headers",
+      "estimatedSeconds": 2,
+      "logs": [
+        "[INFO] Initiating file validation protocol...",
+        "[INFO] Verifying file header magic bytes...",
+        "[INFO] MIME type validated: application/vnd.ms-word.document.macroEnabled.12",
+        "[INFO] File structure integrity check passed."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Metadata Extraction",
+      "description": "Parsing document metadata, author information, and modification history",
+      "estimatedSeconds": 3,
+      "logs": [
+        "[INFO] Extracting document metadata...",
+        "[INFO] Author: Unknown External Entity",
+        "[INFO] Creation date: 2024-12-01T08:22:11Z",
+        "[WARNING] Metadata mismatch detected — creation timestamp inconsistent with modification history."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Hash Generation",
+      "description": "Computing MD5, SHA1, and SHA256 cryptographic fingerprints",
+      "estimatedSeconds": 2,
+      "logs": [
+        "[INFO] Generating MD5 hash fingerprint...",
+        "[INFO] MD5: a1b2c3d4e5f67890abcdef1234567890",
+        "[INFO] Generating SHA1 hash fingerprint...",
+        "[INFO] SHA1: 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b",
+        "[INFO] Generating SHA256 hash fingerprint...",
+        "[INFO] SHA256: 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Static Analysis",
+      "description": "Disassembling code structures, scanning VBA macros, and parsing embedded objects",
+      "estimatedSeconds": 5,
+      "logs": [
+        "[INFO] Performing static code analysis...",
+        "[INFO] Parsing OLE2 compound document structure...",
+        "[WARNING] VBA macro project detected in stream: VBA/ThisDocument",
+        "[WARNING] Suspicious VBA macro: Auto_Open subroutine found.",
+        "[WARNING] Encoded PowerShell command identified in macro body.",
+        "[ALERT] Shell execution call detected: Shell(cmd /c powershell -enc ...)"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "YARA Rule Matching",
+      "description": "Scanning against 12,847 enterprise YARA threat signatures",
+      "estimatedSeconds": 4,
+      "logs": [
+        "[INFO] Loading enterprise YARA rule database (12,847 signatures)...",
+        "[INFO] Scanning for known malware families...",
+        "[ALERT] YARA match: Emotet_Dropper_v4 (confidence: 94%)",
+        "[ALERT] YARA match: PowerShell_Obfuscated_Stage1 (confidence: 88%)",
+        "[ALERT] YARA match: Macro_Downloader_Generic (confidence: 97%)"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Behavior Prediction",
+      "description": "AI-powered behavioral analysis using adversarial ML models",
+      "estimatedSeconds": 5,
+      "logs": [
+        "[INFO] Engaging AegisX AI behavioral engine...",
+        "[INFO] Simulating document execution environment...",
+        "[WARNING] File attempts to spawn child process: cmd.exe",
+        "[WARNING] Network connection attempt predicted to: 185.220.101.47:443",
+        "[ALERT] Credential harvesting behavior pattern identified.",
+        "[ALERT] Registry modification predicted: HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Threat Intelligence Lookup",
+      "description": "Cross-referencing indicators against global threat intelligence feeds",
+      "estimatedSeconds": 3,
+      "logs": [
+        "[INFO] Querying internal threat intelligence database...",
+        "[ALERT] IP 185.220.101.47 found in Tor exit node list.",
+        "[ALERT] Domain payload-delivery-cdn.net found in VirusTotal 42/72 detections.",
+        "[WARNING] File hash matches known Emotet campaign IOCs (Campaign ID: EMO-2024-Q4-089).",
+        "[INFO] Cross-referenced 7 threat feeds. 3 active indicators confirmed."
+      ]
+    },
+    {
+      "id": 8,
+      "name": "MITRE ATT&CK Mapping",
+      "description": "Classifying detected techniques against the MITRE ATT&CK Enterprise framework",
+      "estimatedSeconds": 3,
+      "logs": [
+        "[INFO] Mapping detected behaviors to MITRE ATT&CK framework...",
+        "[ALERT] T1566.001 — Spearphishing Attachment detected.",
+        "[ALERT] T1059.001 — PowerShell execution identified.",
+        "[ALERT] T1003.001 — LSASS Memory credential dump attempt.",
+        "[ALERT] T1041 — Exfiltration Over C2 Channel predicted.",
+        "[INFO] 7 MITRE ATT&CK techniques successfully mapped."
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Risk Calculation",
+      "description": "Computing enterprise risk score using multi-factor weighted scoring model",
+      "estimatedSeconds": 2,
+      "logs": [
+        "[INFO] Calculating enterprise risk score...",
+        "[INFO] Severity factors: Payload type (Critical), YARA matches (3), IOC confirmations (3)",
+        "[INFO] Context factors: Executive email target, sensitive department, domain-joined device",
+        "[INFO] Risk score computed: 87/100 — CRITICAL",
+        "[INFO] Threat family classified: Emotet + PowerShell Dropper"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Report Generation",
+      "description": "Compiling AI-authored threat intelligence report with executive summary",
+      "estimatedSeconds": 3,
+      "logs": [
+        "[INFO] Compiling enterprise threat intelligence report...",
+        "[INFO] AI executive summary generated.",
+        "[INFO] IOC export package prepared.",
+        "[INFO] MITRE ATT&CK navigator layer exported.",
+        "[SUCCESS] AI threat report generated. Report ID: AX-2024-1218-0047",
+        "[SUCCESS] Scan complete. Risk level: CRITICAL (87/100)"
+      ]
+    }
+  ]
+}

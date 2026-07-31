@@ -1,0 +1,158 @@
+{
+  "indicators": [
+    {
+      "id": "ioc-001",
+      "value": "185.220.101.47",
+      "type": "IP Address",
+      "typeShort": "ip",
+      "threatLevel": "critical",
+      "confidence": 97,
+      "source": "AegisX TI Feed + Tor Exit Node List",
+      "status": "active",
+      "description": "Known Tor exit node used as Emotet C2 relay. Active in current campaign."
+    },
+    {
+      "id": "ioc-002",
+      "value": "91.108.56.178",
+      "type": "IP Address",
+      "typeShort": "ip",
+      "threatLevel": "high",
+      "confidence": 88,
+      "source": "VirusTotal Community",
+      "status": "active",
+      "description": "Secondary C2 server. Associated with Emotet Epoch 4 botnet infrastructure."
+    },
+    {
+      "id": "ioc-003",
+      "value": "payload-delivery-cdn.net",
+      "type": "Domain",
+      "typeShort": "domain",
+      "threatLevel": "critical",
+      "confidence": 96,
+      "source": "AegisX YARA + DNS Blacklist",
+      "status": "active",
+      "description": "Primary payload delivery domain. Hosts second-stage dropper. Registered 7 days ago."
+    },
+    {
+      "id": "ioc-004",
+      "value": "update-microsoft-cdn.com",
+      "type": "Domain",
+      "typeShort": "domain",
+      "threatLevel": "high",
+      "confidence": 91,
+      "source": "Internal Threat Feed",
+      "status": "active",
+      "description": "Typosquatted domain mimicking Microsoft CDN. Used for C2 traffic camouflage."
+    },
+    {
+      "id": "ioc-005",
+      "value": "http://payload-delivery-cdn.net/stage2/loader.bin",
+      "type": "URL",
+      "typeShort": "url",
+      "threatLevel": "critical",
+      "confidence": 98,
+      "source": "Dynamic Analysis Sandbox",
+      "status": "active",
+      "description": "Direct URL for second-stage payload binary. Hosting UPX-packed Emotet loader."
+    },
+    {
+      "id": "ioc-006",
+      "value": "https://update-microsoft-cdn.com/telemetry/beacon",
+      "type": "URL",
+      "typeShort": "url",
+      "threatLevel": "high",
+      "confidence": 89,
+      "source": "Network Traffic Analysis",
+      "status": "active",
+      "description": "C2 beacon endpoint. Receives base64-encoded system telemetry every 300 seconds."
+    },
+    {
+      "id": "ioc-007",
+      "value": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+      "type": "File Hash (SHA256)",
+      "typeShort": "hash",
+      "threatLevel": "critical",
+      "confidence": 100,
+      "source": "AegisX Hash Database",
+      "status": "confirmed",
+      "description": "SHA256 of analyzed file. Matches known Emotet dropper variant (Campaign EMO-2024-Q4-089)."
+    },
+    {
+      "id": "ioc-008",
+      "value": "a1b2c3d4e5f67890abcdef1234567890",
+      "type": "File Hash (MD5)",
+      "typeShort": "hash",
+      "threatLevel": "critical",
+      "confidence": 100,
+      "source": "VirusTotal — 42/72 detections",
+      "status": "confirmed",
+      "description": "MD5 hash matches known malicious sample with 42 positive antivirus detections."
+    },
+    {
+      "id": "ioc-009",
+      "value": "powershell.exe",
+      "type": "Process Name",
+      "typeShort": "process",
+      "threatLevel": "high",
+      "confidence": 94,
+      "source": "Behavioral Analysis Engine",
+      "status": "confirmed",
+      "description": "PowerShell spawned as child of WINWORD.EXE with -WindowStyle Hidden and -EncodedCommand flags."
+    },
+    {
+      "id": "ioc-010",
+      "value": "cmd.exe /c wmic process call create",
+      "type": "Process Name",
+      "typeShort": "process",
+      "threatLevel": "high",
+      "confidence": 87,
+      "source": "Behavioral Analysis Engine",
+      "status": "predicted",
+      "description": "WMI-based process spawning used to evade parent-child process monitoring."
+    },
+    {
+      "id": "ioc-011",
+      "value": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\AdobeUpdater",
+      "type": "Registry Key",
+      "typeShort": "registry",
+      "threatLevel": "high",
+      "confidence": 91,
+      "source": "Static Analysis",
+      "status": "confirmed",
+      "description": "Persistence mechanism. Malware registers itself under a legitimate-looking Adobe key name for auto-start."
+    },
+    {
+      "id": "ioc-012",
+      "value": "HKLM\\SYSTEM\\CurrentControlSet\\Services\\WinDefSvc",
+      "type": "Registry Key",
+      "typeShort": "registry",
+      "threatLevel": "critical",
+      "confidence": 85,
+      "source": "Behavioral Analysis Engine",
+      "status": "predicted",
+      "description": "Fake Windows Defender service entry used for elevated persistence and defense evasion."
+    },
+    {
+      "id": "ioc-013",
+      "value": "billing@acc0unting-dept.com",
+      "type": "Email Address",
+      "typeShort": "email",
+      "threatLevel": "critical",
+      "confidence": 99,
+      "source": "Email Header Analysis",
+      "status": "confirmed",
+      "description": "Sender email using zero (0) instead of letter 'o' in 'accounting' — classic phishing typosquat technique."
+    },
+    {
+      "id": "ioc-014",
+      "value": "noreply@payroll-secure-update.com",
+      "type": "Email Address",
+      "typeShort": "email",
+      "threatLevel": "high",
+      "confidence": 93,
+      "source": "Email Header Analysis",
+      "status": "confirmed",
+      "description": "Secondary phishing email address found in macro body. Used for credential harvesting redirect."
+    }
+  ]
+}

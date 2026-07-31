@@ -1,0 +1,110 @@
+{
+  "report": {
+    "reportId": "AX-2024-1218-0047",
+    "reportTitle": "Critical Malware Threat Analysis — Emotet + PowerShell Dropper",
+    "generatedAt": "2024-12-18T09:18:22Z",
+    "analyst": "AegisX AI Engine v4.2",
+    "reviewedBy": "SOC Lead — Dr. Sarah Mitchell",
+    "threatStatus": "Active Threat Detected",
+    "classification": "CONFIDENTIAL — SOC RESTRICTED",
+    "version": "1.0",
+    "executiveSummary": {
+      "summary": "AegisX has identified a critical-severity Emotet-variant malware campaign targeting the Finance department of your organization. A macro-enabled Word document was delivered via spearphishing email and successfully convinced a user to enable macro execution. The attack chain includes PowerShell-based payload download, credential harvesting via LSASS access, and exfiltration attempt over Tor-routed HTTPS. The threat was blocked at the exfiltration stage by the AegisX endpoint agent.",
+      "businessImpact": "HIGH — Active threat with credential exposure. Finance department user credentials potentially compromised. Risk of lateral movement to adjacent systems. Potential PII and financial data exposure.",
+      "primaryRisk": "Credential theft leading to unauthorized account access and potential ransomware deployment as secondary payload.",
+      "recommendedPriority": "P1 — Immediate Response Required. Escalate to CISO and initiate IR procedure IR-005."
+    },
+    "affectedAssets": {
+      "device": "WS-FIN-042",
+      "hostname": "fin-laptop-042.corp.internal",
+      "ipAddress": "10.20.4.42",
+      "macAddress": "00:1A:2B:3C:4D:5E",
+      "department": "Finance",
+      "userAccount": "sarah.johnson@company.com",
+      "userRole": "Senior Financial Analyst",
+      "operatingSystem": "Windows 11 Pro 23H2",
+      "applications": ["Microsoft Office 365", "Google Chrome", "Microsoft Edge", "Outlook", "SAP Finance ERP"],
+      "sensitiveDataExposure": ["Employee payroll records", "Q4 financial forecasts", "Bank account credentials", "Active Directory NTLM hashes", "Browser-stored corporate SSO session tokens"]
+    },
+    "recommendedActions": [
+      {
+        "id": "act-001",
+        "priority": 1,
+        "action": "Isolate the affected endpoint",
+        "details": "Immediately disconnect WS-FIN-042 from corporate network. Enable host firewall to block all traffic except SOC investigation channels.",
+        "owner": "SOC Team",
+        "deadline": "Immediate"
+      },
+      {
+        "id": "act-002",
+        "priority": 2,
+        "action": "Disable the affected user account",
+        "details": "Disable sarah.johnson@company.com in Active Directory. Revoke all active sessions and OAuth tokens in Azure AD.",
+        "owner": "IT Administrator",
+        "deadline": "Within 30 minutes"
+      },
+      {
+        "id": "act-003",
+        "priority": 3,
+        "action": "Reset compromised credentials",
+        "details": "Force password reset for the affected user and all users in the Finance OU. Issue new smart card certificates.",
+        "owner": "Identity Team",
+        "deadline": "Within 1 hour"
+      },
+      {
+        "id": "act-004",
+        "priority": 4,
+        "action": "Block malicious domains at perimeter",
+        "details": "Block payload-delivery-cdn.net and update-microsoft-cdn.com at DNS gateway, proxy, and firewall. Apply to all egress points.",
+        "owner": "Network Security",
+        "deadline": "Within 30 minutes"
+      },
+      {
+        "id": "act-005",
+        "priority": 5,
+        "action": "Block malicious IP addresses",
+        "details": "Add 185.220.101.47 and 91.108.56.178 to threat blocklist on perimeter firewall and SIEM correlation rules.",
+        "owner": "Network Security",
+        "deadline": "Within 30 minutes"
+      },
+      {
+        "id": "act-006",
+        "priority": 6,
+        "action": "Remove malicious attachment from email system",
+        "details": "Purge all instances of Invoice_Q4_2024_Payroll.docm from Exchange Online. Search for similar attachments from the same sender domain.",
+        "owner": "Email Security Team",
+        "deadline": "Within 1 hour"
+      },
+      {
+        "id": "act-007",
+        "priority": 7,
+        "action": "Run enterprise-wide endpoint investigation",
+        "details": "Deploy AegisX threat hunt query for Emotet campaign IOCs across all endpoints. Focus on Finance and Executive department devices.",
+        "owner": "Threat Hunt Team",
+        "deadline": "Within 4 hours"
+      }
+    ],
+    "containmentSteps": [
+      "Step 1: Activate Incident Response Plan IR-005 — Malware Containment",
+      "Step 2: Isolate affected endpoint WS-FIN-042 via NAC policy enforcement",
+      "Step 3: Capture live memory image using Volatility before system shutdown",
+      "Step 4: Acquire forensic disk image for offline analysis",
+      "Step 5: Block all identified IOCs at network perimeter",
+      "Step 6: Disable compromised user account and revoke all tokens",
+      "Step 7: Notify CISO, Legal, and Compliance teams per IR protocol",
+      "Step 8: Search email gateway for related phishing campaign artifacts",
+      "Step 9: Apply emergency YARA signatures to EDR for real-time detection"
+    ],
+    "recoverySteps": [
+      "Step 1: Conduct full forensic analysis of affected endpoint before reimaging",
+      "Step 2: Reimage affected endpoint with clean gold image from trusted source",
+      "Step 3: Restore user data from last verified clean backup (pre-incident)",
+      "Step 4: Re-enable user account after confirming credential reset completion",
+      "Step 5: Apply additional monitoring rules for Finance department endpoints for 30 days",
+      "Step 6: Mandatory security awareness training for all Finance department staff",
+      "Step 7: Review and update email filtering rules for macro-enabled documents",
+      "Step 8: Conduct post-incident review within 72 hours and update IR playbook",
+      "Step 9: File regulatory notification if PII exposure is confirmed (GDPR Article 33)"
+    ]
+  }
+}

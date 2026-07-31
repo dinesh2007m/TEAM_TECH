@@ -1,0 +1,142 @@
+{
+  "mockFiles": [
+    {
+      "id": "file-001",
+      "filename": "Invoice_Q4_2024_Payroll.docm",
+      "extension": ".docm",
+      "size": "2.4 MB",
+      "sizeBytes": 2516582,
+      "category": "Office Document",
+      "mimeType": "application/vnd.ms-word.document.macroEnabled.12",
+      "uploadTime": "2024-12-18T09:14:33Z",
+      "status": "pending",
+      "risk": "critical",
+      "source": "Email Attachment",
+      "sender": "billing@acc0unting-dept.com",
+      "preview": "Microsoft Word macro-enabled document. Contains VBA script blocks. Origin: suspicious external email.",
+      "tags": ["macro", "phishing", "external-email"]
+    },
+    {
+      "id": "file-002",
+      "filename": "IT_Security_Policy_Update.pdf",
+      "extension": ".pdf",
+      "size": "1.1 MB",
+      "sizeBytes": 1153433,
+      "category": "PDF Document",
+      "mimeType": "application/pdf",
+      "uploadTime": "2024-12-18T08:55:12Z",
+      "status": "pending",
+      "risk": "moderate",
+      "source": "Internal Share",
+      "sender": "it-team@company.internal",
+      "preview": "PDF document with embedded JavaScript. Contains cross-reference streams and encoded data sections.",
+      "tags": ["pdf", "javascript", "encoded-data"]
+    },
+    {
+      "id": "file-003",
+      "filename": "employee_bonus_list_2024.zip",
+      "extension": ".zip",
+      "size": "4.7 MB",
+      "sizeBytes": 4927488,
+      "category": "Compressed Archive",
+      "mimeType": "application/zip",
+      "uploadTime": "2024-12-18T08:33:47Z",
+      "status": "pending",
+      "risk": "high",
+      "source": "Email Attachment",
+      "sender": "hr-noreply@h-r-dept.net",
+      "preview": "ZIP archive with nested password-protected content. Contains executable files: setup.exe, updater.dll.",
+      "tags": ["archive", "nested-zip", "executable"]
+    },
+    {
+      "id": "file-004",
+      "filename": "system_health_report.eml",
+      "extension": ".eml",
+      "size": "0.8 MB",
+      "sizeBytes": 838860,
+      "category": "Email File",
+      "mimeType": "message/rfc822",
+      "uploadTime": "2024-12-18T07:22:19Z",
+      "status": "pending",
+      "risk": "high",
+      "source": "Forwarded Email",
+      "sender": "alerts@sys-monitor.co",
+      "preview": "EML file with encoded HTML body. Embedded tracking pixel and obfuscated JavaScript redirect links.",
+      "tags": ["phishing", "tracking-pixel", "redirect"]
+    },
+    {
+      "id": "file-005",
+      "filename": "adobe_update_v24.1.exe",
+      "extension": ".exe",
+      "size": "6.2 MB",
+      "sizeBytes": 6502809,
+      "category": "Executable",
+      "mimeType": "application/x-msdownload",
+      "uploadTime": "2024-12-17T16:47:55Z",
+      "status": "pending",
+      "risk": "critical",
+      "source": "Download — Untrusted Source",
+      "sender": "N/A",
+      "preview": "PE32+ Windows executable. High entropy sections detected. Signs of code packing with UPX. Network communication capabilities present.",
+      "tags": ["exe", "packed", "high-entropy", "network"]
+    },
+    {
+      "id": "file-006",
+      "filename": "analytics_tracker.js",
+      "extension": ".js",
+      "size": "0.3 MB",
+      "sizeBytes": 314572,
+      "category": "JavaScript",
+      "mimeType": "application/javascript",
+      "uploadTime": "2024-12-17T14:30:08Z",
+      "status": "pending",
+      "risk": "moderate",
+      "source": "Web Application Upload",
+      "sender": "N/A",
+      "preview": "Obfuscated JavaScript with eval() chains and base64-encoded payload segments. External C2 beaconing pattern detected.",
+      "tags": ["obfuscated", "eval", "c2-beacon"]
+    }
+  ],
+  "recentHistory": [
+    {
+      "id": "hist-001",
+      "filename": "Q3_Merger_Contracts.docx",
+      "extension": ".docx",
+      "size": "3.1 MB",
+      "uploadDate": "2024-12-17",
+      "scanStatus": "completed",
+      "risk": "low",
+      "threatFound": false
+    },
+    {
+      "id": "hist-002",
+      "filename": "expense_report_nov.pdf",
+      "extension": ".pdf",
+      "size": "0.9 MB",
+      "uploadDate": "2024-12-16",
+      "scanStatus": "completed",
+      "risk": "low",
+      "threatFound": false
+    },
+    {
+      "id": "hist-003",
+      "filename": "network_scan_results.zip",
+      "extension": ".zip",
+      "size": "8.3 MB",
+      "uploadDate": "2024-12-15",
+      "scanStatus": "completed",
+      "risk": "moderate",
+      "threatFound": true
+    },
+    {
+      "id": "hist-004",
+      "filename": "password_reset_notice.eml",
+      "extension": ".eml",
+      "size": "0.4 MB",
+      "uploadDate": "2024-12-14",
+      "scanStatus": "completed",
+      "risk": "critical",
+      "threatFound": true
+    }
+  ]
+}
