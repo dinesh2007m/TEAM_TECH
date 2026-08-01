@@ -7,200 +7,200 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <div className="popup-container">
+  <div class="popup-container">
     <!-- Header -->
-    <header className="popup-header">
-      <div className="brand">
-        <div className="logo-shield">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <header class="popup-header">
+      <div class="brand">
+        <div class="logo-shield">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
         </div>
         <div>
-          <h1 className="brand-title">TEAM_TECH</h1>
-          <p className="brand-subtitle">AI Email Phishing & Sandbox</p>
+          <h1 class="brand-title">TEAM_TECH</h1>
+          <p class="brand-subtitle">AI Email Phishing & Sandbox</p>
         </div>
       </div>
-      <div className="status-badge" id="statusBadge">
-        <span className="status-dot"></span>
+      <div class="status-badge" id="statusBadge">
+        <span class="status-dot"></span>
         <span id="statusText">Checking...</span>
       </div>
     </header>
 
     <!-- Global Notice Banner -->
-    <div id="noticeBanner" className="notice-banner hidden">
+    <div id="noticeBanner" class="notice-banner hidden">
       <span id="noticeMsg"></span>
     </div>
 
     <!-- Navigation Tabs -->
-    <nav className="tabs-nav">
-      <button className="tab-btn active" data-tab="tab-analyze">Analyze</button>
-      <button className="tab-btn" data-tab="tab-results">Results</button>
-      <button className="tab-btn" data-tab="tab-history">History</button>
-      <button className="tab-btn" data-tab="tab-settings">Settings</button>
+    <nav class="tabs-nav">
+      <button class="tab-btn active" data-tab="tab-analyze">Analyze</button>
+      <button class="tab-btn" data-tab="tab-results">Results</button>
+      <button class="tab-btn" data-tab="tab-history">History</button>
+      <button class="tab-btn" data-tab="tab-settings">Settings</button>
     </nav>
 
     <!-- MAIN SCROLLABLE CONTENT -->
-    <main className="tab-viewport">
+    <main class="tab-viewport">
       <!-- TAB 1: ANALYZE -->
-      <section id="tab-analyze" className="tab-content active">
+      <section id="tab-analyze" class="tab-content active">
         <!-- Webmail Instant Detection -->
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">Instant Webmail Analysis</h3>
-            <p className="card-subtitle">Scrape visible email data directly from active DOM view</p>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Instant Webmail Analysis</h3>
+            <p class="card-subtitle">Scrape visible email data directly from active DOM view</p>
           </div>
-          <div className="btn-stack">
-            <button className="btn btn-primary" id="btnAnalyzeGmail">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <div class="btn-stack">
+            <button class="btn btn-primary" id="btnAnalyzeGmail">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
               Analyze Current Gmail Email
             </button>
-            <button className="btn btn-secondary" id="btnAnalyzeOutlook">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <button class="btn btn-secondary" id="btnAnalyzeOutlook">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
               Analyze Current Outlook Email
             </button>
           </div>
         </div>
 
         <!-- Manual .eml Upload -->
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">Upload Email (.eml / .msg)</h3>
-            <p className="card-subtitle">Execute complete scan with phishing & header inspection</p>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Upload Email (.eml / .msg)</h3>
+            <p class="card-subtitle">Execute complete scan with phishing & header inspection</p>
           </div>
-          <div className="dropzone" id="dropzoneEml">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <p className="dropzone-text">Click or drag & drop <strong>.eml</strong> or <strong>.msg</strong></p>
+          <div class="dropzone" id="dropzoneEml">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <p class="dropzone-text">Click or drag & drop <strong>.eml</strong> or <strong>.msg</strong></p>
             <input type="file" id="fileInputEml" accept=".eml,.msg" hidden />
           </div>
         </div>
 
         <!-- Manual Attachment Upload -->
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">Static Sandbox File Inspection</h3>
-            <p className="card-subtitle">Inspect PDF, Office macros, binaries, or archives</p>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Static Sandbox File Inspection</h3>
+            <p class="card-subtitle">Inspect PDF, Office macros, binaries, or archives</p>
           </div>
-          <div className="dropzone" id="dropzoneFile">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-            <p className="dropzone-text">Click or drag & drop file to analyze in Sandbox</p>
+          <div class="dropzone" id="dropzoneFile">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            <p class="dropzone-text">Click or drag & drop file to analyze in Sandbox</p>
             <input type="file" id="fileInputFile" hidden />
           </div>
         </div>
       </section>
 
       <!-- TAB 2: RESULTS -->
-      <section id="tab-results" className="tab-content">
-        <div id="resultsEmpty" className="empty-panel">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-          <p className="empty-title">No Active Analysis Result</p>
-          <p className="empty-subtitle">Trigger webmail analysis or upload a file to view detailed risk findings.</p>
+      <section id="tab-results" class="tab-content">
+        <div id="resultsEmpty" class="empty-panel">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4B5563" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <p class="empty-title">No Active Analysis Result</p>
+          <p class="empty-subtitle">Trigger webmail analysis or upload a file to view detailed risk findings.</p>
         </div>
 
-        <div id="resultsContent" className="hidden space-y-3">
+        <div id="resultsContent" class="hidden space-y-3">
           <!-- Risk Banner -->
-          <div className="risk-banner" id="riskBanner">
-            <div className="risk-left">
-              <span className="risk-caption">OVERALL RISK ASSESSMENT</span>
-              <h2 className="risk-title" id="riskTitle">LOW</h2>
+          <div class="risk-banner" id="riskBanner">
+            <div class="risk-left">
+              <span class="risk-caption">OVERALL RISK ASSESSMENT</span>
+              <h2 class="risk-title" id="riskTitle">LOW</h2>
             </div>
-            <div className="risk-score-pill">
+            <div class="risk-score-pill">
               <span id="riskScore">15</span>
-              <span className="score-denom">/100</span>
+              <span class="score-denom">/100</span>
             </div>
           </div>
 
           <!-- Metadata -->
-          <div className="card meta-card space-y-1">
-            <div className="meta-item">
-              <span className="meta-label">Subject</span>
-              <span className="meta-value" id="resSubject">—</span>
+          <div class="card meta-card space-y-1">
+            <div class="meta-item">
+              <span class="meta-label">Subject</span>
+              <span class="meta-value" id="resSubject">—</span>
             </div>
-            <div className="meta-item">
-              <span className="meta-label">Sender</span>
-              <span className="meta-value" id="resSender">—</span>
+            <div class="meta-item">
+              <span class="meta-label">Sender</span>
+              <span class="meta-value" id="resSender">—</span>
             </div>
-            <div className="meta-item">
-              <span className="meta-label">Scan ID</span>
-              <span className="meta-value font-mono" id="resScanId">—</span>
+            <div class="meta-item">
+              <span class="meta-label">Scan ID</span>
+              <span class="meta-value font-mono" id="resScanId">—</span>
             </div>
           </div>
 
           <!-- Recommendation -->
-          <div className="card advice-card">
-            <h4 className="advice-label">Recommendation</h4>
-            <p className="advice-text" id="resRecommendation">No security risks detected.</p>
+          <div class="card advice-card">
+            <h4 class="advice-label">Recommendation</h4>
+            <p class="advice-text" id="resRecommendation">No security risks detected.</p>
           </div>
 
           <!-- Threat Indicators -->
-          <div className="card">
-            <h4 className="section-title">Threat Indicators (<span id="indCount">0</span>)</h4>
-            <div id="indList" className="indicators-scroll font-sans space-y-1.5"></div>
+          <div class="card">
+            <h4 class="section-title">Threat Indicators (<span id="indCount">0</span>)</h4>
+            <div id="indList" class="indicators-scroll font-sans space-y-1.5"></div>
           </div>
 
           <!-- Action Buttons -->
-          <div className="action-row">
-            <button className="btn btn-secondary sm" id="btnDownloadJson">JSON Report</button>
-            <button className="btn btn-primary sm" id="btnDownloadPdf">PDF Report</button>
+          <div class="action-row">
+            <button class="btn btn-secondary sm" id="btnDownloadJson">JSON Report</button>
+            <button class="btn btn-primary sm" id="btnDownloadPdf">PDF Report</button>
           </div>
         </div>
       </section>
 
       <!-- TAB 3: HISTORY -->
-      <section id="tab-history" className="tab-content">
-        <div className="section-header">
-          <h3 className="card-title">SQLite Database Records</h3>
-          <button className="icon-btn" id="btnRefreshHistory" title="Refresh History">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      <section id="tab-history" class="tab-content">
+        <div class="section-header">
+          <h3 class="card-title">SQLite Database Records</h3>
+          <button class="icon-btn" id="btnRefreshHistory" title="Refresh History">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           </button>
         </div>
 
-        <div id="historyLoading" className="loading-state hidden">
-          <div className="spinner"></div>
+        <div id="historyLoading" class="loading-state hidden">
+          <div class="spinner"></div>
           <p>Fetching records from backend...</p>
         </div>
 
-        <div id="historyList" className="history-scroll space-y-2"></div>
+        <div id="historyList" class="history-scroll space-y-2"></div>
       </section>
 
       <!-- TAB 4: SETTINGS -->
-      <section id="tab-settings" className="tab-content">
-        <div className="card space-y-3">
-          <h3 className="card-title">Extension Configuration</h3>
+      <section id="tab-settings" class="tab-content">
+        <div class="card space-y-3">
+          <h3 class="card-title">Extension Configuration</h3>
 
-          <div className="field-group">
-            <label className="field-label" htmlFor="backendUrl">FastAPI Backend Base URL</label>
-            <input type="text" id="backendUrl" className="field-input" placeholder="http://127.0.0.1:8000" />
+          <div class="field-group">
+            <label class="field-label" for="backendUrl">FastAPI Backend Base URL</label>
+            <input type="text" id="backendUrl" class="field-input" placeholder="http://127.0.0.1:8000" />
           </div>
 
-          <div className="switch-group">
+          <div class="switch-group">
             <div>
-              <p className="switch-title">Auto Analyze Webmail</p>
-              <p className="switch-sub">Analyze emails on Gmail / Outlook tab navigation</p>
+              <p class="switch-title">Auto Analyze Webmail</p>
+              <p class="switch-sub">Analyze emails on Gmail / Outlook tab navigation</p>
             </div>
-            <input type="checkbox" id="chkAutoAnalyze" className="custom-switch" />
+            <input type="checkbox" id="chkAutoAnalyze" class="custom-switch" />
           </div>
 
-          <div className="switch-group">
+          <div class="switch-group">
             <div>
-              <p className="switch-title">Desktop Notifications</p>
-              <p className="switch-sub">Show Chrome notifications on High/Critical detections</p>
+              <p class="switch-title">Desktop Notifications</p>
+              <p class="switch-sub">Show Chrome notifications on High/Critical detections</p>
             </div>
-            <input type="checkbox" id="chkNotifications" className="custom-switch" />
+            <input type="checkbox" id="chkNotifications" class="custom-switch" />
           </div>
 
-          <div className="btn-stack pt-2">
-            <button className="btn btn-primary" id="btnSaveSettings">Save Preferences</button>
-            <button className="btn btn-secondary" id="btnTestBackend">Test Backend Connection</button>
+          <div class="btn-stack pt-2">
+            <button class="btn btn-primary" id="btnSaveSettings">Save Preferences</button>
+            <button class="btn btn-secondary" id="btnTestBackend">Test Backend Connection</button>
           </div>
         </div>
       </section>
     </main>
 
     <!-- Global Progress Overlay -->
-    <div id="globalLoading" className="progress-overlay hidden">
-      <div className="spinner"></div>
-      <p className="progress-msg" id="loadingMsg">Analyzing with AI Engine...</p>
+    <div id="globalLoading" class="progress-overlay hidden">
+      <div class="spinner"></div>
+      <p class="progress-msg" id="loadingMsg">Analyzing with AI Engine...</p>
     </div>
   </div>
 

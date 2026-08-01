@@ -95,16 +95,15 @@ def _derive_risk_score(phishing_resp: Any, sandbox_resp: Any) -> tuple[int, str]
 
     Priority: sandbox risk_score (0-100) > phishing risk_level mapping.
     """
+    p_level = phishing_resp.get("risk_level", "Low") if isinstance(phishing_resp, dict) else getattr(phishing_resp, "risk_level", "Low")
+    
     # Try sandbox first (has a numeric score)
     if sandbox_resp is not None:
-        score = getattr(sandbox_resp, "risk_score", None)
-        level = getattr(sandbox_resp, "risk_level", None)
+        score = sandbox_resp.get("risk_score") if isinstance(sandbox_resp, dict) else getattr(sandbox_resp, "risk_score", None)
+        level = sandbox_resp.get("risk_level") if isinstance(sandbox_resp, dict) else getattr(sandbox_resp, "risk_level", None)
         if score is not None:
-            # Combine with phishing risk level
-            phishing_level = getattr(phishing_resp, "risk_level", "Low")
-            phishing_score = _RISK_SCORE_MAP.get(str(phishing_level), 20)
+            phishing_score = _RISK_SCORE_MAP.get(str(p_level), 20)
             combined = max(int(score), phishing_score)
-            # Derive level from combined score
             if combined >= 75:
                 level = "High"
             elif combined >= 50:
@@ -116,8 +115,8 @@ def _derive_risk_score(phishing_resp: Any, sandbox_resp: Any) -> tuple[int, str]
             return combined, str(level)
 
     # Phishing-only
-    phishing_level = str(getattr(phishing_resp, "risk_level", "Low"))
-    return _RISK_SCORE_MAP.get(phishing_level, 20), phishing_level
+    phishing_level_str = str(p_level)
+    return _RISK_SCORE_MAP.get(phishing_level_str, 20), phishing_level_str
 
 
 def _build_recommendation(risk_level: str, indicator_count: int) -> str:
@@ -147,8 +146,18 @@ def _build_summary(
     risk_level: str,
 ) -> str:
     """Build a short narrative summary of the scan result."""
-    phishing_count = len(getattr(phishing_resp, "indicators", []))
-    sandbox_count  = len(getattr(getattr(sandbox_resp, "indicators", None) or [], "__iter__", lambda: [])()) if sandbox_resp else 0
+    if isinstance(phishing_resp, dict):
+        phishing_count = len(phishing_resp.get("indicators", []))
+    else:
+        phishing_count = len(getattr(phishing_resp, "indicators", []) or [])
+
+    if sandbox_resp:
+        if isinstance(sandbox_resp, dict):
+            sandbox_count = len(sandbox_resp.get("indicators", []))
+        else:
+            sandbox_count = len(getattr(sandbox_resp, "indicators", []) or [])
+    else:
+        sandbox_count = 0
 
     parts: list[str] = []
     if phishing_count:
@@ -196,17 +205,29 @@ def persist_scan(
         subject  = pe.get("subject")
 
         # ── Risk aggregation ───────────────────────────────────────────────
+        if isinstance(phishing_resp, dict):
+            p_indicators_raw = phishing_resp.get("indicators", [])
+            p_risk_level = phishing_resp.get("risk_level", "Low")
+        else:
+            p_indicators_raw = getattr(phishing_resp, "indicators", [])
+            p_risk_level = getattr(phishing_resp, "risk_level", "Low")
+
+        if isinstance(sandbox_resp, dict):
+            s_indicators_raw = sandbox_resp.get("indicators", [])
+            s_risk_score = sandbox_resp.get("risk_score")
+            s_risk_level = sandbox_resp.get("risk_level")
+        else:
+            s_indicators_raw = getattr(sandbox_resp, "indicators", []) if sandbox_resp else []
+            s_risk_score = getattr(sandbox_resp, "risk_score", None) if sandbox_resp else None
+            s_risk_level = getattr(sandbox_resp, "risk_level", None) if sandbox_resp else None
+
         risk_score, risk_level = _derive_risk_score(phishing_resp, sandbox_resp)
-        recommendation = _build_recommendation(risk_level, len(getattr(phishing_resp, "indicators", [])))
+        recommendation = _build_recommendation(risk_level, len(p_indicators_raw))
         summary        = _build_summary(phishing_resp, sandbox_resp, risk_level)
 
         # ── Indicators ─────────────────────────────────────────────────────
-        phishing_indicators = _indicators_to_dicts(getattr(phishing_resp, "indicators", []))
-        sandbox_indicators  = _indicators_to_dicts(
-            getattr(getattr(sandbox_resp, "indicators", None), "__iter__", lambda: [])()
-            if sandbox_resp and hasattr(getattr(sandbox_resp, "indicators", None), "__iter__")
-            else (getattr(sandbox_resp, "indicators", []) if sandbox_resp else [])
-        )
+        phishing_indicators = _indicators_to_dicts(p_indicators_raw)
+        sandbox_indicators  = _indicators_to_dicts(s_indicators_raw)
 
         # ── Attachments ────────────────────────────────────────────────────
         attachments = _attachments_to_dicts(pe.get("attachments", []), sandbox_resp)

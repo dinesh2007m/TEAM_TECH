@@ -151,25 +151,40 @@ async function analyzeCurrentWebmail(targetProvider) {
         return;
       }
 
-      console.log('[Popup] Content script returned parsed DOM data:', response.data);
-      updateLoadingMsg('Analyzing email with AI Engine & Risk Processor...');
+      const emailData = response.data;
+      console.log('[Popup] Content script returned parsed DOM data:', emailData);
+      updateLoadingMsg('Analyzing email with AI Engine & SQLite persistence...');
 
-      chrome.runtime.sendMessage(
-        { action: 'ANALYZE_PARSED_EMAIL', payload: response.data },
-        (res) => {
-          hideLoading();
-          if (!res || !res.success) {
-            console.error('[Popup] Background analysis failed:', res?.error);
-            showNotice(res?.error || 'Analysis failed. Check FastAPI backend logs.', 'error');
-            return;
-          }
-          console.log('[Popup] Background analysis complete. Rendering results:', res.data);
-          const riskData = res.data?.risk || res.data?.phishing || {};
-          renderResults(riskData, response.data);
-          switchToTab('tab-results');
-          showNotice('Email analysis completed successfully.', 'success');
-        }
-      );
+      // Construct synthetic .eml file blob from DOM data for 1-click complete scan
+      const emlContent = [
+        `From: ${emailData.sender || ''}`,
+        `To: ${emailData.receiver || ''}`,
+        `Subject: ${emailData.subject || 'No Subject'}`,
+        'MIME-Version: 1.0',
+        'Content-Type: text/plain; charset=utf-8',
+        '',
+        emailData.body_text || ''
+      ].join('\n');
+
+      const emlBlob = new Blob([emlContent], { type: 'message/rfc822' });
+      const emlFile = new File([emlBlob], 'webmail_extracted.eml', { type: 'message/rfc822' });
+
+      try {
+        const scanRes = await executeCompleteScan(emlFile);
+        hideLoading();
+        console.log('[Popup] Webmail complete scan finished:', scanRes);
+
+        renderResults(scanRes, emailData);
+        switchToTab('tab-results');
+
+        const level = scanRes.risk_analysis?.risk_level || 'Low';
+        chrome.runtime.sendMessage({ action: 'UPDATE_BADGE', payload: { riskLevel: level } });
+        showNotice(`Webmail analysis complete. Risk Level: ${level}`, 'success');
+      } catch (err) {
+        console.error('[Popup] Webmail scan execution error:', err);
+        hideLoading();
+        showNotice(err.message, 'error');
+      }
     });
   } catch (err) {
     console.error('[Popup] Exception during webmail analysis flow:', err);
@@ -230,7 +245,9 @@ async function handleEmlUpload(file) {
       scan_id: res.scan_id || res.email_id,
     });
     switchToTab('tab-results');
-    showNotice(`Complete scan finished. Risk Level: ${res.risk_analysis?.risk_level || res.risk_level}`, 'success');
+    const level = res.risk_analysis?.risk_level || res.risk_level || 'Low';
+    chrome.runtime.sendMessage({ action: 'UPDATE_BADGE', payload: { riskLevel: level } });
+    showNotice(`Complete scan finished. Risk Level: ${level}`, 'success');
   } catch (err) {
     console.error('[Popup] handleEmlUpload error:', err);
     hideLoading();
@@ -260,6 +277,7 @@ async function handleAttachmentUpload(file) {
       }
     );
     switchToTab('tab-results');
+    chrome.runtime.sendMessage({ action: 'UPDATE_BADGE', payload: { riskLevel: res.risk_level || 'Low' } });
     showNotice(`Sandbox analysis complete for '${res.filename}'`, 'success');
   } catch (err) {
     console.error('[Popup] handleAttachmentUpload error:', err);
@@ -270,12 +288,12 @@ async function handleAttachmentUpload(file) {
 
 // ─── Results Renderer ──────────────────────────────────────────────────────────
 
-function renderResults(riskData, metaData = {}) {
-  console.log('[Popup] Rendering results view:', { riskData, metaData });
+function renderResults(scanData, metaData = {}) {
+  console.log('[Popup] Rendering results view:', { scanData, metaData });
   const empty = document.getElementById('resultsEmpty');
   const content = document.getElementById('resultsContent');
 
-  if (!riskData) {
+  if (!scanData) {
     empty.classList.remove('hidden');
     content.classList.add('hidden');
     return;
@@ -284,14 +302,16 @@ function renderResults(riskData, metaData = {}) {
   empty.classList.add('hidden');
   content.classList.remove('hidden');
 
-  // Extract nested objects if coming from /scan response
-  const riskAnalysis = riskData.risk_analysis || riskData;
-  const parsedEmail = riskData.parsed_email || metaData;
+  // Extract risk, parsed email, and indicator data regardless of endpoint structure
+  const riskAnalysis = scanData.risk_analysis || scanData.risk || scanData;
+  const parsedEmail = scanData.parsed_email || metaData;
+  const phishingAnalysis = scanData.phishing_analysis || scanData.phishing || scanData;
+  const sandboxAnalysis = scanData.sandbox_analysis || scanData.sandbox || null;
 
-  activeScanId = riskData.scan_id || riskData.email_id || metaData.scan_id;
+  activeScanId = scanData.scan_id || scanData.email_id || metaData.scan_id;
 
-  const level = (riskAnalysis.risk_level || riskData.risk_level || 'Low').toUpperCase();
-  const score = riskAnalysis.risk_score ?? riskData.risk_score ?? 0;
+  const level = (riskAnalysis.risk_level || scanData.risk_level || 'Low').toUpperCase();
+  const score = riskAnalysis.risk_score ?? scanData.risk_score ?? 0;
 
   const banner = document.getElementById('riskBanner');
   const title = document.getElementById('riskTitle');
@@ -302,48 +322,48 @@ function renderResults(riskData, metaData = {}) {
 
   banner.className = `risk-banner ${level.toLowerCase()}`;
 
-  document.getElementById('resSubject').innerText = parsedEmail.subject || metaData.subject || riskData.subject || '—';
-  document.getElementById('resSender').innerText = parsedEmail.sender || metaData.sender || riskData.sender || '—';
+  document.getElementById('resSubject').innerText = parsedEmail.subject || metaData.subject || scanData.subject || '—';
+  document.getElementById('resSender').innerText = parsedEmail.sender || metaData.sender || scanData.sender || '—';
   document.getElementById('resScanId').innerText = activeScanId || '—';
 
   const recommendation =
     riskAnalysis.recommendation ||
     (Array.isArray(riskAnalysis.recommendations) ? riskAnalysis.recommendations.join(' ') : null) ||
-    riskData.recommendation ||
+    scanData.recommendation ||
     'No critical remediation action required.';
 
   document.getElementById('resRecommendation').innerText = recommendation;
 
-  // Indicators list
+  // Indicators list consolidation
   const indCount = document.getElementById('indCount');
   const indList = document.getElementById('indList');
 
-  const phishingInds = riskData.phishing_analysis?.indicators || riskData.phishing_indicators || riskData.indicators || [];
-  const sandboxInds = riskData.sandbox_analysis?.indicators || riskData.sandbox_indicators || [];
+  const phishingInds = phishingAnalysis?.indicators || scanData.phishing_indicators || scanData.indicators || [];
+  const sandboxInds = sandboxAnalysis?.indicators || scanData.sandbox_indicators || [];
   const allIndicators = [...phishingInds, ...sandboxInds];
 
   indCount.innerText = allIndicators.length;
   indList.innerHTML = '';
 
   if (allIndicators.length === 0) {
-    indList.innerHTML = '<p className="text-muted text-center py-2">No threat indicators triggered.</p>';
+    indList.innerHTML = '<p class="text-muted text-center py-2">No threat indicators triggered.</p>';
   } else {
     allIndicators.forEach((ind) => {
       const div = document.createElement('div');
       div.className = 'ind-badge-row';
       const sev = (ind.severity || 'low').toLowerCase();
       div.innerHTML = `
-        <span className="badge-tag ${sev}">${(ind.severity || 'LOW').toUpperCase()}</span>
+        <span class="badge-tag ${sev}">${(ind.severity || 'LOW').toUpperCase()}</span>
         <div style="flex:1;">
-          <p className="font-bold">${ind.name || 'Indicator'}</p>
-          <p className="text-sub" style="font-size:9.5px;">${ind.reason || ''}</p>
+          <p class="font-bold">${ind.name || 'Indicator'}</p>
+          <p class="text-sub" style="font-size:9.5px;">${ind.reason || ''}</p>
         </div>
       `;
       indList.appendChild(div);
     });
   }
 
-  // Setup download buttons
+  // Download buttons setup
   const btnJson = document.getElementById('btnDownloadJson');
   const btnPdf = document.getElementById('btnDownloadPdf');
 
@@ -390,7 +410,7 @@ async function loadHistoryList() {
     console.log(`[Popup] History list loaded with ${scans.length} records.`);
 
     if (scans.length === 0) {
-      container.innerHTML = '<p className="empty-subtitle text-center py-6">No scan records in SQLite database.</p>';
+      container.innerHTML = '<p class="empty-subtitle text-center py-6">No scan records in SQLite database.</p>';
       return;
     }
 
@@ -400,12 +420,12 @@ async function loadHistoryList() {
       const level = (scan.risk_level || 'Low').toLowerCase();
       item.innerHTML = `
         <div style="min-width:0; flex:1; margin-right:6px;">
-          <p className="font-bold text-main" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${scan.subject || 'No Subject'}</p>
-          <p className="text-sub" style="font-size:9.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">From: ${scan.sender || '—'} • ${new Date(scan.created_at).toLocaleDateString()}</p>
+          <p class="font-bold text-main" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${scan.subject || 'No Subject'}</p>
+          <p class="text-sub" style="font-size:9.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">From: ${scan.sender || '—'} • ${new Date(scan.created_at).toLocaleDateString()}</p>
         </div>
         <div style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
-          <span className="badge-tag ${level}">${scan.risk_level}</span>
-          <button className="btn btn-secondary sm btn-view" data-id="${scan.scan_id}">View</button>
+          <span class="badge-tag ${level}">${scan.risk_level}</span>
+          <button class="btn btn-secondary sm btn-view" data-id="${scan.scan_id}">View</button>
         </div>
       `;
       container.appendChild(item);
@@ -435,7 +455,7 @@ async function loadHistoryList() {
   } catch (err) {
     console.error('[Popup] History load error:', err);
     spinner.classList.add('hidden');
-    container.innerHTML = `<p className="notice-banner error">Failed to load history: ${err.message}</p>`;
+    container.innerHTML = `<p class="notice-banner error">Failed to load history: ${err.message}</p>`;
   }
 }
 
