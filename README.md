@@ -263,7 +263,7 @@ Verified modules: email upload, email parsing, phishing detection, sandbox analy
 Team Members Dakshnesh  —  Roll No: 7376252AD140 
 Sethukkarasi  —  Roll No: 7376252IT332 
 Dinesh M  —  Roll No: 7376242AL120 
-Visvanth R  —  Roll No: 7376242AL221 
+Visvanth R  —  Roll No: 7376242AL221
 
 ---
 
