@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -10,8 +10,6 @@ import {
   CartesianGrid,
   Tooltip as RechartsTooltip,
   Legend,
-  LineChart,
-  Line,
 } from 'recharts';
 import {
   UploadCloud,
@@ -24,7 +22,12 @@ import {
   AlertTriangle,
   Loader2,
   ShieldCheck,
+  ShieldAlert,
+  ShieldX,
   ExternalLink,
+  Activity,
+  FileCode,
+  Search,
 } from 'lucide-react';
 
 import { PageHeader } from '../components/ui/PageHeader';
@@ -33,102 +36,59 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { useToast } from '../hooks/useToast';
 import { staggerContainer, staggerItem } from '../utils/animations';
+import { listHistory } from '../services/apiService';
 
-// ─── Dashboard-specific mock data ─────────────────────────────────────────────
-
-const RECENT_REPORTS = [
-  {
-    id: 'REP-2026-081',
-    filename: 'Q3_AWS_VPC_Threat_Graph_Audit',
-    category: 'Ransomware & IAM Escalation',
-    fileSize: '4.2 MB',
-    time: 'Today at 13:45',
-    risk: 'high',
-  },
-  {
-    id: 'REP-2026-080',
-    filename: 'Malware_Sandbox_Execution_EML',
-    category: 'Spear Phishing XLSM Macro',
-    fileSize: '2.8 MB',
-    time: 'Today at 11:20',
-    risk: 'medium',
-  },
-  {
-    id: 'REP-2026-079',
-    filename: 'K8s_Cluster_RBAC_Escape_Analysis',
-    category: 'Container Privilege Abuse',
-    fileSize: '5.1 MB',
-    time: 'Yesterday at 18:30',
-    risk: 'low',
-  },
-];
-
-const RECENT_HISTORY = [
-  {
-    id: 1,
-    status: 'Completed',
-    title: 'Suspicious email uploaded',
-    description: 'Invoice_Urgent_9941.eml',
-    time: '14:02:12',
-  },
-  {
-    id: 2,
-    status: 'Active',
-    title: 'Scan initiated',
-    description: 'Environment setup completed',
-    time: '14:02:18',
-  },
-  {
-    id: 3,
-    status: 'Running',
-    title: 'Sandbox detonation started',
-    description: 'Win11 Pro • Dynamic analysis',
-    time: '14:02:25',
-  },
-  {
-    id: 4,
-    status: 'Threat Detected',
-    title: 'Threat detected',
-    description: 'Malicious VBA macro executed',
-    time: '14:02:34',
-  },
-  {
-    id: 5,
-    status: 'Completed',
-    title: 'Action taken',
-    description: 'File quarantined & threat blocked',
-    time: '14:02:40',
-  },
-];
-
-const THREAT_TREND_DATA = [
-  { time: '00:00', detected: 4, blocked: 2 },
-  { time: '02:00', detected: 7, blocked: 5 },
-  { time: '04:00', detected: 3, blocked: 2 },
-  { time: '06:00', detected: 9, blocked: 7 },
-  { time: '08:00', detected: 18, blocked: 14 },
-  { time: '10:00', detected: 24, blocked: 19 },
-  { time: '12:00', detected: 31, blocked: 26 },
-  { time: '14:00', detected: 27, blocked: 22 },
-  { time: '16:00', detected: 35, blocked: 30 },
-  { time: '18:00', detected: 22, blocked: 18 },
-  { time: '20:00', detected: 16, blocked: 13 },
-  { time: '22:00', detected: 11, blocked: 9 },
-  { time: '24:00', detected: 6, blocked: 5 },
-];
-
-// ─── Risk badge helper ─────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const RISK_MAP = {
-  high: { label: 'High Risk', variant: 'danger' },
-  medium: { label: 'Medium Risk', variant: 'warning' },
-  low: { label: 'Low Risk', variant: 'success' },
+  High: { label: 'High Risk', variant: 'danger', icon: ShieldX, text: 'text-red-400' },
+  Medium: { label: 'Medium Risk', variant: 'warning', icon: ShieldAlert, text: 'text-amber-400' },
+  Low: { label: 'Low Risk', variant: 'info', icon: ShieldCheck, text: 'text-blue-400' },
+  Safe: { label: 'Safe', variant: 'success', icon: ShieldCheck, text: 'text-green-400' },
 };
 
-// ─── Timeline icon helper ──────────────────────────────────────────────────────
+function riskCfg(level) {
+  return RISK_MAP[level] ?? RISK_MAP.Low;
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return iso;
+  }
+}
+
+function formatTimeOnly(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  } catch {
+    return iso;
+  }
+}
+
+function truncate(str, max = 35) {
+  if (!str) return '—';
+  return str.length > max ? str.slice(0, max) + '…' : str;
+}
+
+// ─── Timeline icon & dot helper ───────────────────────────────────────────────
 
 const TimelineIcon = ({ status }) => {
-  const base = 'w-4 h-4';
+  const base = 'w-3.5 h-3.5';
   switch (status) {
     case 'Completed':
       return <CheckCircle2 className={`${base} text-green-400`} />;
@@ -179,6 +139,138 @@ export const Dashboard = () => {
   const navigate = useNavigate();
   const { addToast } = useToast();
 
+  const [scans, setScans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // ── Load dashboard data from FastAPI backend SQLite ─────────────────────────
+  const loadDashboardData = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await listHistory({ page: 1, page_size: 50 });
+      setScans(data.scans || []);
+    } catch (e) {
+      setError(e.message);
+      addToast({
+        title: 'Failed to refresh telemetry',
+        description: e.message,
+        type: 'error',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [addToast]);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  // ── Derived Recent Reports (Newest 3 scans) ──────────────────────────────────
+  const recentReports = useMemo(() => {
+    return scans.slice(0, 3);
+  }, [scans]);
+
+  // ── Derived Recent History Timeline Events ───────────────────────────────────
+  const recentHistoryEvents = useMemo(() => {
+    if (scans.length === 0) return [];
+
+    const events = [];
+    // Process the top 3 newest scans to generate chronological activity timeline events
+    scans.slice(0, 3).forEach((scan, scanIdx) => {
+      const timeStr = formatTimeOnly(scan.created_at);
+      const dateStr = formatDate(scan.created_at);
+
+      // Event 1: Email Uploaded
+      events.push({
+        id: `${scan.scan_id}-upload`,
+        status: 'Completed',
+        title: 'Email Uploaded & Queued',
+        description: `${truncate(scan.subject || 'Email Scan', 28)} (From: ${truncate(scan.sender, 22)})`,
+        time: timeStr,
+        rawTime: new Date(scan.created_at).getTime() + (scanIdx * 10),
+      });
+
+      // Event 2: Email Parsed
+      events.push({
+        id: `${scan.scan_id}-parse`,
+        status: 'Completed',
+        title: 'Email Parsed',
+        description: 'MIME headers & body content extracted',
+        time: timeStr,
+        rawTime: new Date(scan.created_at).getTime() + (scanIdx * 10) + 1,
+      });
+
+      // Event 3: Phishing Analysis Completed
+      events.push({
+        id: `${scan.scan_id}-phishing`,
+        status: 'Completed',
+        title: 'Phishing Analysis Completed',
+        description: `${scan.indicator_count ?? 0} threat indicator(s) evaluated`,
+        time: timeStr,
+        rawTime: new Date(scan.created_at).getTime() + (scanIdx * 10) + 2,
+      });
+
+      // Event 4: Sandbox Analysis (if attachments exist)
+      if (scan.attachment_count > 0) {
+        events.push({
+          id: `${scan.scan_id}-sandbox`,
+          status: 'Completed',
+          title: 'Sandbox Analysis Completed',
+          description: `${scan.attachment_count} attachment(s) inspected`,
+          time: timeStr,
+          rawTime: new Date(scan.created_at).getTime() + (scanIdx * 10) + 3,
+        });
+      }
+
+      // Event 5: Risk Score Generated
+      events.push({
+        id: `${scan.scan_id}-risk`,
+        status: scan.risk_level === 'High' ? 'Threat Detected' : 'Active',
+        title: scan.risk_level === 'High' ? 'High Threat Detected' : 'Risk Score Generated',
+        description: `Risk Level: ${scan.risk_level} (${scan.risk_score}/100)`,
+        time: timeStr,
+        rawTime: new Date(scan.created_at).getTime() + (scanIdx * 10) + 4,
+      });
+
+      // Event 6: Report Created
+      events.push({
+        id: `${scan.scan_id}-report`,
+        status: 'Completed',
+        title: 'Report Created',
+        description: `Scan ID: ${scan.scan_id.slice(0, 13)}…`,
+        time: timeStr,
+        rawTime: new Date(scan.created_at).getTime() + (scanIdx * 10) + 5,
+      });
+    });
+
+    // Return top 5 newest events
+    return events.sort((a, b) => b.rawTime - a.rawTime).slice(0, 5);
+  }, [scans]);
+
+  // ── Derived 24h Threat Trend Telemetry Chart Data ─────────────────────────────
+  const trendChartData = useMemo(() => {
+    const timeSlots = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'];
+
+    if (scans.length === 0) {
+      return timeSlots.map((time) => ({ time, detected: 0, blocked: 0 }));
+    }
+
+    const slotCounts = timeSlots.map((time) => ({ time, detected: 0, blocked: 0 }));
+
+    scans.forEach((scan) => {
+      if (!scan.created_at) return;
+      const hour = new Date(scan.created_at).getHours();
+      const slotIdx = Math.min(Math.floor(hour / 4), 6);
+      slotCounts[slotIdx].detected += 1;
+      if (scan.risk_level === 'High') {
+        slotCounts[slotIdx].blocked += 1;
+      }
+    });
+
+    return slotCounts;
+  }, [scans]);
+
   return (
     <motion.div
       variants={staggerContainer}
@@ -198,13 +290,15 @@ export const Dashboard = () => {
               variant="outline"
               size="sm"
               leftIcon={RefreshCw}
-              onClick={() =>
+              isLoading={loading}
+              onClick={() => {
+                loadDashboardData();
                 addToast({
                   title: 'SOC Telemetry Refreshed',
-                  description: 'All feeds updated to latest epoch.',
+                  description: 'All feeds updated from SQLite database.',
                   type: 'info',
-                })
-              }
+                });
+              }}
             >
               Refresh Telemetry
             </Button>
@@ -285,51 +379,65 @@ export const Dashboard = () => {
             }
             className="h-full"
           >
-            <div className="space-y-3">
-              {RECENT_REPORTS.map((rep, idx) => {
-                const risk = RISK_MAP[rep.risk] || RISK_MAP.low;
-                return (
-                  <motion.div
-                    key={rep.id}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.08, duration: 0.3 }}
-                    className="flex items-start gap-3 p-2.5 rounded-lg bg-gray-900/60 border border-gray-800/80 hover:border-gray-700 transition-all group"
-                  >
-                    {/* Icon */}
-                    <div className="p-1.5 rounded-md bg-blue-500/10 shrink-0 mt-0.5">
-                      <FileText className="w-4 h-4 text-blue-400" />
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-gray-200 truncate leading-tight">
-                        {rep.filename}
-                      </p>
-                      <p className="text-[10px] font-mono text-gray-400 mt-0.5 truncate">
-                        {rep.category}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <span className="text-[10px] font-mono text-gray-500">
-                          {rep.fileSize}
-                        </span>
-                        <span className="text-[10px] font-mono text-gray-500">
-                          •
-                        </span>
-                        <span className="text-[10px] font-mono text-gray-500">
-                          {rep.time}
-                        </span>
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-2">
+                <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
+                <p className="text-xs text-gray-400">Loading recent reports…</p>
+              </div>
+            ) : recentReports.length > 0 ? (
+              <div className="space-y-3">
+                {recentReports.map((rep, idx) => {
+                  const rCfg = riskCfg(rep.risk_level);
+                  return (
+                    <motion.div
+                      key={rep.scan_id}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.08, duration: 0.3 }}
+                      onClick={() => navigate('/reports')}
+                      className="flex items-start gap-3 p-2.5 rounded-lg bg-gray-900/60 border border-gray-800/80 hover:border-gray-700 transition-all group cursor-pointer"
+                    >
+                      {/* Icon */}
+                      <div className="p-1.5 rounded-md bg-blue-500/10 shrink-0 mt-0.5">
+                        <FileText className="w-4 h-4 text-blue-400" />
                       </div>
-                    </div>
 
-                    {/* Risk badge */}
-                    <Badge variant={risk.variant} size="sm" className="shrink-0 mt-0.5">
-                      {risk.label}
-                    </Badge>
-                  </motion.div>
-                );
-              })}
-            </div>
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-gray-200 truncate leading-tight">
+                          {rep.subject || 'No Subject'}
+                        </p>
+                        <p className="text-[10px] font-mono text-gray-400 mt-0.5 truncate">
+                          From: {rep.sender || 'Unknown'}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <span className="text-[10px] font-mono font-bold text-gray-300">
+                            Score: {rep.risk_score}/100
+                          </span>
+                          <span className="text-[10px] font-mono text-gray-500">
+                            •
+                          </span>
+                          <span className="text-[10px] font-mono text-gray-500">
+                            {formatDate(rep.created_at)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Risk badge */}
+                      <Badge variant={rCfg.variant} size="sm" className="shrink-0 mt-0.5">
+                        {rCfg.label}
+                      </Badge>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <FileText className="w-8 h-8 text-gray-700 mb-2" />
+                <p className="text-xs font-semibold text-gray-400">No reports in database.</p>
+                <p className="text-[11px] text-gray-600 mt-0.5">Upload an email to generate scans.</p>
+              </div>
+            )}
           </Card>
         </motion.div>
 
@@ -360,46 +468,59 @@ export const Dashboard = () => {
             }
             className="h-full"
           >
-            {/* Vertical timeline */}
-            <div className="relative pl-5">
-              {/* Vertical line */}
-              <div className="absolute left-[7px] top-2 bottom-2 w-px bg-gradient-to-b from-blue-500/40 via-gray-700 to-transparent" />
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-2">
+                <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
+                <p className="text-xs text-gray-400">Loading activity timeline…</p>
+              </div>
+            ) : recentHistoryEvents.length > 0 ? (
+              /* Vertical timeline */
+              <div className="relative pl-5">
+                {/* Vertical line */}
+                <div className="absolute left-[7px] top-2 bottom-2 w-px bg-gradient-to-b from-blue-500/40 via-gray-700 to-transparent" />
 
-              <div className="space-y-4">
-                {RECENT_HISTORY.map((event, idx) => (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.1, duration: 0.3 }}
-                    className="relative flex items-start gap-3"
-                  >
-                    {/* Timeline dot */}
-                    <div
-                      className={`absolute -left-5 top-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#111827] shrink-0 ${STATUS_DOT[event.status] || 'bg-gray-600'}`}
-                    />
+                <div className="space-y-4">
+                  {recentHistoryEvents.map((event, idx) => (
+                    <motion.div
+                      key={event.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.08, duration: 0.3 }}
+                      className="relative flex items-start gap-3"
+                    >
+                      {/* Timeline dot */}
+                      <div
+                        className={`absolute -left-5 top-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#111827] shrink-0 ${STATUS_DOT[event.status] || 'bg-gray-600'}`}
+                      />
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <TimelineIcon status={event.status} />
-                        <p className="text-xs font-semibold text-gray-200 truncate">
-                          {event.title}
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <TimelineIcon status={event.status} />
+                          <p className="text-xs font-semibold text-gray-200 truncate">
+                            {event.title}
+                          </p>
+                        </div>
+                        <p className="text-[10px] font-mono text-gray-400 truncate pl-5">
+                          {event.description}
                         </p>
                       </div>
-                      <p className="text-[10px] font-mono text-gray-400 truncate pl-6">
-                        {event.description}
-                      </p>
-                    </div>
 
-                    {/* Timestamp */}
-                    <span className="text-[10px] font-mono text-gray-500 shrink-0 bg-gray-900 px-1.5 py-0.5 rounded border border-gray-800 mt-0.5">
-                      {event.time}
-                    </span>
-                  </motion.div>
-                ))}
+                      {/* Timestamp */}
+                      <span className="text-[10px] font-mono text-gray-500 shrink-0 bg-gray-900 px-1.5 py-0.5 rounded border border-gray-800 mt-0.5">
+                        {event.time}
+                      </span>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <Clock className="w-8 h-8 text-gray-700 mb-2" />
+                <p className="text-xs font-semibold text-gray-400">No recent scan activity.</p>
+                <p className="text-[11px] text-gray-600 mt-0.5">Upload a scan to record activity.</p>
+              </div>
+            )}
           </Card>
         </motion.div>
       </section>
@@ -414,7 +535,7 @@ export const Dashboard = () => {
                   Threat Analysis – Threat Trend Telemetry (24h)
                 </h3>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Real-time comparison of Detected vs Auto-Blocked threats
+                  Real-time comparison of Detected vs Auto-Blocked threats from SQLite
                 </p>
               </div>
               <div className="flex items-center gap-3 shrink-0">
@@ -425,7 +546,7 @@ export const Dashboard = () => {
                 </div>
                 {/* Live indicator */}
                 <Badge variant="success" size="sm" dot>
-                  Live
+                  Live DB
                 </Badge>
               </div>
             </div>
@@ -433,7 +554,7 @@ export const Dashboard = () => {
         >
           <div className="h-72 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={THREAT_TREND_DATA} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
+              <AreaChart data={trendChartData} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="dashDetectedGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.35} />
@@ -453,6 +574,7 @@ export const Dashboard = () => {
                   tick={{ fill: '#9CA3AF', fontSize: 11, fontFamily: 'monospace' }}
                   tickLine={false}
                   axisLine={false}
+                  allowDecimals={false}
                 />
                 <RechartsTooltip content={<CustomTooltip />} />
                 <Legend
