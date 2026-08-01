@@ -16,7 +16,7 @@ Complete project documentation is available in the Google Drive folder below.
 
 ## 📂 Google Drive
 
-🔗 [https://drive.google.com/drive/folders/YOUR_FOLDER_LINK](https://drive.google.com/drive/folders/1zgT0r8qd2n5yjau7iNKVn5OZZl1adU0-?usp=drive_link)
+🔗 [FOLDER_LINK](https://drive.google.com/drive/folders/1zgT0r8qd2n5yjau7iNKVn5OZZl1adU0-?usp=drive_link)
 
 ## 📌 Overview
 
