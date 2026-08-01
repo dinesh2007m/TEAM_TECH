@@ -35,7 +35,7 @@ export const Login = () => {
     setLoadingText('Authenticating Session Key...');
 
     setTimeout(() => {
-      setLoadingText('Initializing Digital Twin Access...');
+      setLoadingText('Initializing Secure Session...');
     }, 600);
 
     setTimeout(() => {
@@ -118,10 +118,10 @@ export const Login = () => {
             <div className="space-y-4">
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white font-heading leading-tight">
                 Simulate Attacks. <br />
-                <span className="text-gradient-primary">Protect Digital Twins.</span>
+                <span className="text-gradient-primary">Protect Enterprise Assets.</span>
               </h1>
               <p className="text-base text-gray-400 font-sans max-w-xl leading-relaxed">
-                Autonomous real-time digital twin emulation, zero-day payload sandbox detonation, and AI mitigation graph engine for Fortune 500 SOCs.
+                Autonomous real-time AI threat analysis, zero-day payload sandbox detonation, and automated mitigation engine for Fortune 500 SOCs.
               </p>
             </div>
 

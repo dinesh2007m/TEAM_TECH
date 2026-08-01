@@ -5,8 +5,6 @@ import {
   Shield,
   LayoutDashboard,
   UploadCloud,
-  Cpu,
-  GitFork,
   FileText,
   History,
   BarChart3,
@@ -36,24 +34,6 @@ const menuItems = [
     badge: 'NEW',
     badgeVariant: 'primary',
     category: 'MAIN OPERATIVE',
-  },
-  {
-    id: 'digital-twin',
-    title: 'Digital Twin',
-    path: '/digital-twin',
-    icon: Cpu,
-    badge: 'LIVE',
-    badgeVariant: 'success',
-    category: 'SIMULATION',
-  },
-  {
-    id: 'attack-graph',
-    title: 'Attack Graph',
-    path: '/attack-graph',
-    icon: GitFork,
-    badge: 'AI',
-    badgeVariant: 'warning',
-    category: 'SIMULATION',
   },
   {
     id: 'reports',
@@ -215,7 +195,7 @@ export const Sidebar = () => {
             <span className="text-xs font-bold text-gray-200 font-mono">SOC Engine</span>
           </div>
           <p className="text-[11px] text-gray-400 leading-snug">
-            Digital Twin status is operational with zero latent threats.
+            AI Threat Engine is operational with zero latent threats.
           </p>
         </div>
       )}

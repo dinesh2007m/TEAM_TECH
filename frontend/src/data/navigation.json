@@ -17,24 +17,6 @@
     "category": "Main"
   },
   {
-    "id": "digital-twin",
-    "title": "Digital Twin",
-    "path": "/digital-twin",
-    "icon": "Cpu",
-    "badge": "LIVE",
-    "badgeVariant": "success",
-    "category": "Simulation"
-  },
-  {
-    "id": "attack-graph",
-    "title": "Attack Graph",
-    "path": "/attack-graph",
-    "icon": "GitFork",
-    "badge": "AI",
-    "badgeVariant": "warning",
-    "category": "Simulation"
-  },
-  {
     "id": "reports",
     "title": "Reports",
     "path": "/reports",

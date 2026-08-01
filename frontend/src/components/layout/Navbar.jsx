@@ -21,7 +21,7 @@ export const Navbar = () => {
   const handleSyncTwin = () => {
     setIsSyncing(true);
     addToast({
-      title: 'Digital Twin Synchronization Started',
+      title: 'Infrastructure Sync Started',
       description: 'Refreshing AWS/Azure cluster topology nodes...',
       type: 'info',
     });
@@ -29,7 +29,7 @@ export const Navbar = () => {
       setIsSyncing(false);
       addToast({
         title: 'Synchronization Complete',
-        description: '1,420 nodes updated in active memory twin.',
+        description: '1,420 nodes updated in active memory scan.',
         type: 'success',
       });
     }, 2000);
@@ -64,7 +64,7 @@ export const Navbar = () => {
               size="md"
               onClick={handleSyncTwin}
               className={isSyncing ? 'animate-spin text-blue-400 border-blue-500' : ''}
-              title="Sync Digital Twin State"
+              title="Sync Infrastructure State"
             />
 
             {/* Quick Actions Button */}
@@ -108,7 +108,7 @@ export const Navbar = () => {
       <Modal
         isOpen={isQuickActionModalOpen}
         onClose={() => setIsQuickActionModalOpen(false)}
-        title="Initiate Security Scan & Digital Twin Injection"
+        title="Initiate New Security Scan"
         subtitle="Upload vulnerability report or trigger real-time AI threat analysis"
         footer={
           <>

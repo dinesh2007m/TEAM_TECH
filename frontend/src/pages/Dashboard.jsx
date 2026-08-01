@@ -23,22 +23,17 @@ import {
   Zap,
   Terminal,
   Activity,
-  Cpu,
   Search,
-  Filter,
   ArrowUpRight,
   FileText,
   UploadCloud,
-  GitFork,
   BarChart3,
   History,
   AlertTriangle,
   CheckCircle2,
   ExternalLink,
   RefreshCw,
-  Server,
   Database,
-  Radio,
   Clock,
 } from 'lucide-react';
 
@@ -103,9 +98,7 @@ export const Dashboard = () => {
   const quickActions = [
     { title: 'Analyze File', path: '/upload', icon: UploadCloud, color: 'text-blue-400', desc: 'Scan binary or PCAP' },
     { title: 'Upload Email', path: '/upload', icon: FileText, color: 'text-cyan-400', desc: 'Ingest .EML attachment' },
-    { title: 'Create Digital Twin', path: '/digital-twin', icon: Cpu, color: 'text-green-400', desc: 'Simulate topology node' },
     { title: 'View Reports', path: '/reports', icon: FileText, color: 'text-amber-400', desc: 'Compliance & executive PDFs' },
-    { title: 'Attack Graph', path: '/attack-graph', icon: GitFork, color: 'text-purple-400', desc: 'AI lateral propagation' },
     { title: 'Scan History', path: '/history', icon: History, color: 'text-gray-400', desc: 'Audit log archives' },
     { title: 'Threat Analytics', path: '/analytics', icon: BarChart3, color: 'text-rose-400', desc: 'Risk trend profiling' },
   ];
@@ -120,7 +113,7 @@ export const Dashboard = () => {
       {/* Hero Page Header */}
       <PageHeader
         title="Security Operations Center"
-        subtitle="Live Threat Telemetry, Digital Twin Emulation & AI Remediation Engine"
+        subtitle="Live Threat Telemetry, AI Analysis & Automated Remediation Engine"
         badgeText="REALTIME SOC"
         badgeVariant="primary"
         actions={

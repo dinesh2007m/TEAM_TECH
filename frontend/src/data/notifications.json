@@ -46,11 +46,11 @@
   },
   {
     "id": "notif-006",
-    "title": "AI Twin Analysis Completed",
-    "description": "Simulated 1,420 node cloud topology. 0 critical lateral paths open.",
+    "title": "AI Infrastructure Analysis Completed",
+    "description": "Scanned 1,420 node cloud topology. 0 critical lateral paths open.",
     "time": "2 hours ago",
     "severity": "info",
     "read": true,
-    "category": "Digital Twin"
+    "category": "Infrastructure"
   }
 ]
