@@ -11,6 +11,7 @@ from app.routes.scans import router as scans_router
 from app.routes.reports import router as reports_router
 from app.routes.history import router as history_router
 from app.routes.risk import router as risk_router
+from app.routes.system import router as system_router
 
 logger = logging.getLogger("app.main")
 
@@ -70,6 +71,7 @@ app.include_router(scans_router, prefix="/api/v1")
 app.include_router(reports_router, prefix="/api/v1")
 app.include_router(history_router, prefix="/api/v1")
 app.include_router(risk_router, prefix="/api/v1")
+app.include_router(system_router, prefix="/api/v1")
 
 @app.get("/")
 def root():

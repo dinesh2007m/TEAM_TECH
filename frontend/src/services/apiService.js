@@ -202,3 +202,48 @@ export async function downloadScanPDF(scanId) {
   const url = `${API_BASE_URL}/api/v1/report/${scanId}/pdf`;
   window.open(url, '_blank');
 }
+
+// ─── System / Admin API ──────────────────────────────────────────────────────
+/**
+ * Check system status and backend connection health.
+ */
+export async function getSystemStatus() {
+  console.log('[apiService] getSystemStatus');
+  return _get('/api/v1/system/status');
+}
+
+/**
+ * Clear all scan history from SQLite database.
+ */
+export async function clearScanHistoryDB() {
+  console.log('[apiService] clearScanHistoryDB');
+  return _delete('/api/v1/system/clear-history');
+}
+
+/**
+ * Refresh database and re-seed sample scans.
+ */
+export async function refreshDatabaseDB() {
+  console.log('[apiService] refreshDatabaseDB');
+  return _post('/api/v1/system/db/refresh', {});
+}
+
+/**
+ * Download database JSON backup.
+ */
+export async function exportDatabaseDB() {
+  console.log('[apiService] exportDatabaseDB');
+  const url = `${API_BASE_URL}/api/v1/system/db/export`;
+  window.open(url, '_blank');
+}
+
+/**
+ * Import JSON backup file into database.
+ */
+export async function importDatabaseDB(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  console.log('[apiService] importDatabaseDB:', file.name);
+  return _postForm('/api/v1/system/db/import', formData);
+}
+
