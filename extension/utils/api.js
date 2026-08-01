@@ -2,17 +2,19 @@
  * utils/api.js
  * ------------
  * API Layer for TEAM_TECH Chrome Extension.
- * Communicates strictly with the existing FastAPI backend contract at configurable URL.
+ * Hardened payload normalization matching FastAPI backend schemas exactly.
  */
 
 import { getBackendUrl } from './storage.js';
+
+// ─── Response Parser & Error Formatter ───────────────────────────────────────
 
 async function handleResponse(response) {
   let data;
   try {
     data = await response.json();
   } catch {
-    throw new Error(`Backend returned unreadable response (HTTP ${response.status}).`);
+    throw new Error(`Server returned unreadable response (HTTP ${response.status}).`);
   }
 
   if (!response.ok) {
@@ -25,9 +27,9 @@ async function handleResponse(response) {
 
     const msg =
       response.status === 400 ? detail || 'Bad request.'
-      : response.status === 404 ? detail || 'Resource not found in database.'
-      : response.status === 422 ? detail || 'Validation failed. Check payload.'
-      : response.status >= 500 ? 'Server error on backend.'
+      : response.status === 404 ? detail || 'Resource not found on server.'
+      : response.status === 422 ? detail || 'Payload validation failed. Check input fields.'
+      : response.status >= 500 ? 'Server error. Please verify backend state.'
       : detail || `Error (HTTP ${response.status}).`;
 
     throw new Error(msg);
@@ -76,12 +78,101 @@ async function requestPostForm(path, formData) {
   return handleResponse(response);
 }
 
-// ─── API Methods ───────────────────────────────────────────────────────────────
+// ─── Payload Normalizers matching Pydantic Schemas ─────────────────────────────
+
+/**
+ * Normalizes email data into PhishingAnalyzeRequest schema for POST /api/v1/phishing/analyze
+ */
+export function normalizePhishingPayload(emailData = {}) {
+  const bodyText = emailData.body_text || emailData.body || '';
+  const urls = Array.isArray(emailData.urls) ? emailData.urls : [];
+
+  // Normalize attachments array into AttachmentInput objects
+  const rawAttachments = Array.isArray(emailData.attachments) ? emailData.attachments : [];
+  const attachments = rawAttachments.map((att) => {
+    if (typeof att === 'string') {
+      const ext = att.includes('.') ? `.${att.split('.').pop()}` : undefined;
+      return {
+        filename: att,
+        content_type: 'application/octet-stream',
+        extension: ext,
+        size: 0,
+        inline: false,
+      };
+    }
+    return {
+      filename: att.filename || att.name || 'attachment',
+      content_type: att.content_type || att.mime_type || 'application/octet-stream',
+      extension: att.extension || (att.filename && att.filename.includes('.') ? `.${att.filename.split('.').pop()}` : undefined),
+      size: typeof att.size === 'number' ? att.size : 0,
+      inline: Boolean(att.inline),
+    };
+  });
+
+  return {
+    scan_id: emailData.scan_id || emailData.email_id || null,
+    email_id: emailData.email_id || emailData.scan_id || null,
+    sender: emailData.sender || null,
+    receiver: emailData.receiver || null,
+    subject: emailData.subject || null,
+    date: emailData.date || null,
+    reply_to: emailData.reply_to || null,
+    return_path: emailData.return_path || null,
+    message_id: emailData.message_id || null,
+    mime_version: emailData.mime_version || null,
+    headers: typeof emailData.headers === 'object' && emailData.headers !== null ? emailData.headers : {},
+    body_text: bodyText,
+    body_html: emailData.body_html || '',
+    urls: urls,
+    attachments: attachments,
+  };
+}
+
+/**
+ * Normalizes risk data into RiskAnalyzeRequest schema for POST /api/v1/risk/analyze
+ */
+export function normalizeRiskPayload(parsedEmail, phishingResult, sandboxResult = null) {
+  const normalizedEmail = normalizePhishingPayload(parsedEmail);
+
+  const normalizedPhishing = phishingResult ? {
+    status: phishingResult.status || 'success',
+    scan_id: phishingResult.scan_id || null,
+    indicator_count: typeof phishingResult.indicator_count === 'number' ? phishingResult.indicator_count : (phishingResult.indicators || []).length,
+    risk_level: phishingResult.risk_level || 'Low',
+    indicators: (phishingResult.indicators || []).map((i) => ({
+      name: i.name || 'Indicator',
+      severity: i.severity || 'Low',
+      reason: i.reason || '',
+    })),
+  } : null;
+
+  const normalizedSandbox = sandboxResult ? {
+    status: sandboxResult.status || 'success',
+    filename: sandboxResult.filename || 'attachment',
+    risk_score: typeof sandboxResult.risk_score === 'number' ? sandboxResult.risk_score : 0,
+    risk_level: sandboxResult.risk_level || 'Low',
+    analysis: sandboxResult.analysis || {},
+    indicators: (sandboxResult.indicators || []).map((i) => ({
+      name: i.name || 'Sandbox Indicator',
+      severity: i.severity || 'Low',
+      reason: i.reason || '',
+    })),
+  } : null;
+
+  return {
+    parsed_email: normalizedEmail,
+    phishing_result: normalizedPhishing,
+    sandbox_result: normalizedSandbox,
+  };
+}
+
+// ─── API Client Methods ────────────────────────────────────────────────────────
 
 /**
  * Upload .eml file to POST /api/v1/upload/email
  */
 export async function uploadEmail(file) {
+  if (!file) throw new Error('No email file provided.');
   const formData = new FormData();
   formData.append('file', file);
   return requestPostForm('/api/v1/upload/email', formData);
@@ -91,9 +182,11 @@ export async function uploadEmail(file) {
  * Send parsed email data to POST /api/v1/phishing/analyze
  */
 export async function analyzePhishing(parsedEmail, scanId = null) {
-  const payload = scanId
-    ? { ...parsedEmail, scan_id: scanId, email_id: scanId }
-    : parsedEmail;
+  const payload = normalizePhishingPayload(parsedEmail);
+  if (scanId) {
+    payload.scan_id = scanId;
+    payload.email_id = scanId;
+  }
   return requestPostJson('/api/v1/phishing/analyze', payload);
 }
 
@@ -101,6 +194,7 @@ export async function analyzePhishing(parsedEmail, scanId = null) {
  * Upload attachment to POST /api/v1/sandbox/analyze
  */
 export async function analyzeAttachment(file) {
+  if (!file) throw new Error('No attachment file provided.');
   const formData = new FormData();
   formData.append('file', file);
   return requestPostForm('/api/v1/sandbox/analyze', formData);
@@ -109,14 +203,16 @@ export async function analyzeAttachment(file) {
 /**
  * Send combined findings to POST /api/v1/risk/analyze
  */
-export async function analyzeRisk(riskPayload) {
-  return requestPostJson('/api/v1/risk/analyze', riskPayload);
+export async function analyzeRisk(parsedEmail, phishingResult, sandboxResult = null) {
+  const payload = normalizeRiskPayload(parsedEmail, phishingResult, sandboxResult);
+  return requestPostJson('/api/v1/risk/analyze', payload);
 }
 
 /**
  * Execute 1-click complete scan via POST /api/v1/scan
  */
 export async function executeCompleteScan(file) {
+  if (!file) throw new Error('No file provided for complete scan.');
   const formData = new FormData();
   formData.append('file', file);
   return requestPostForm('/api/v1/scan', formData);
@@ -133,7 +229,23 @@ export async function getHistory(page = 1, pageSize = 50) {
  * Fetch scan report detail from GET /api/v1/report/{scanId}
  */
 export async function getReport(scanId) {
+  if (!scanId) throw new Error('scanId is required.');
   return requestGet(`/api/v1/report/${scanId}`);
+}
+
+/**
+ * Delete scan record from DELETE /api/v1/history/{scanId}
+ */
+export async function deleteScan(scanId) {
+  if (!scanId) throw new Error('scanId is required.');
+  const baseUrl = await getBackendUrl();
+  let response;
+  try {
+    response = await fetch(`${baseUrl}/api/v1/history/${scanId}`, { method: 'DELETE' });
+  } catch (err) {
+    throw new Error(`Cannot connect to backend to delete scan ${scanId}.`);
+  }
+  return handleResponse(response);
 }
 
 /**

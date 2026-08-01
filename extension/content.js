@@ -6,31 +6,33 @@
  * Safe, read-only extraction — zero credentials, cookies, or auth tokens accessed.
  */
 
-console.log('[TEAM_TECH ContentScript] Content script loaded on:', window.location.hostname);
+console.log('[TEAM_TECH ContentScript] Extension content script active on:', window.location.hostname);
 
 // ─── Message Listener ─────────────────────────────────────────────────────────
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'EXTRACT_EMAIL') {
-    try {
-      const emailData = extractVisibleEmail();
-      if (!emailData) {
-        sendResponse({
-          success: false,
-          error: 'No active email message detected in the DOM. Please open an email first.',
-        });
-      } else {
-        sendResponse({
-          success: true,
-          provider: detectProvider(),
-          data: emailData,
-        });
-      }
-    } catch (err) {
-      sendResponse({ success: false, error: err.message });
-    }
-    return true;
+  if (!request || typeof request !== 'object' || request.action !== 'EXTRACT_EMAIL') {
+    return false;
   }
+
+  try {
+    const emailData = extractVisibleEmail();
+    if (!emailData) {
+      sendResponse({
+        success: false,
+        error: 'No active email message detected in the DOM. Please open an email first.',
+      });
+    } else {
+      sendResponse({
+        success: true,
+        provider: detectProvider(),
+        data: emailData,
+      });
+    }
+  } catch (err) {
+    sendResponse({ success: false, error: err.message });
+  }
+  return true;
 });
 
 // ─── Provider Detection ───────────────────────────────────────────────────────
@@ -58,14 +60,18 @@ function extractVisibleEmail() {
 
 function extractGmailEmail() {
   // Subject
-  const subjectEl = document.querySelector('h2.hP') || document.querySelector('div.ha h2');
+  const subjectEl =
+    document.querySelector('h2.hP') ||
+    document.querySelector('div.ha h2') ||
+    document.querySelector('span.bog');
   const subject = subjectEl ? subjectEl.innerText.trim() : 'No Subject';
 
   // Active expanded message view container
   const messageContainer =
     document.querySelector('div.gE.iv') ||
     document.querySelector('div.gs') ||
-    document.querySelector('div.a3s.aiL');
+    document.querySelector('div.a3s.aiL') ||
+    document.querySelector('div[role="main"]');
 
   if (!messageContainer && !subjectEl) {
     return null;
@@ -75,15 +81,26 @@ function extractGmailEmail() {
   const senderEl =
     document.querySelector('span.gD') ||
     document.querySelector('span[email]') ||
-    document.querySelector('span.go');
-  const senderEmail = senderEl ? senderEl.getAttribute('email') || senderEl.innerText.trim() : '';
+    document.querySelector('span.go') ||
+    document.querySelector('div.gE.iv span[email]');
+  const senderEmail = senderEl
+    ? senderEl.getAttribute('email') || senderEl.innerText.trim()
+    : '';
 
   // Receiver
-  const receiverEl = document.querySelector('span.g2') || document.querySelector('span.hb');
-  const receiver = receiverEl ? receiverEl.innerText.trim() : '';
+  const receiverEl =
+    document.querySelector('span.g2') ||
+    document.querySelector('span.hb') ||
+    document.querySelector('td.gL span[email]');
+  const receiver = receiverEl
+    ? receiverEl.getAttribute('email') || receiverEl.innerText.trim()
+    : '';
 
   // Body Content
-  const bodyEl = document.querySelector('div.a3s.aiL') || document.querySelector('div[dir="ltr"]');
+  const bodyEl =
+    document.querySelector('div.a3s.aiL') ||
+    document.querySelector('div[dir="ltr"]') ||
+    document.querySelector('div.ii.gt');
   const bodyText = bodyEl ? bodyEl.innerText.trim() : '';
 
   // Links
@@ -97,20 +114,30 @@ function extractGmailEmail() {
     });
   }
 
-  // Attachment names
-  const attachment_names = [];
-  document.querySelectorAll('div.aZo, span.aV3, div.aqN').forEach((att) => {
-    const text = att.innerText.trim();
-    if (text) attachment_names.push(text);
+  // Attachments
+  const attachments = [];
+  document.querySelectorAll('div.aZo, span.aV3, div.aqN, div[role="button"][aria-label*="Attachment"]').forEach((att) => {
+    const text = att.getAttribute('aria-label') || att.innerText.trim();
+    if (text) {
+      const ext = text.includes('.') ? `.${text.split('.').pop()}` : undefined;
+      attachments.push({
+        filename: text,
+        content_type: 'application/octet-stream',
+        extension: ext,
+        size: 0,
+        inline: false,
+      });
+    }
   });
 
   return {
     sender: senderEmail,
     receiver: receiver,
     subject: subject,
-    body: bodyText,
+    body_text: bodyText,
+    body_html: bodyEl ? bodyEl.innerHTML : '',
     urls: Array.from(new Set(links)),
-    attachments: attachment_names,
+    attachments: attachments,
   };
 }
 
@@ -121,21 +148,26 @@ function extractOutlookEmail() {
   const subjectEl =
     document.querySelector('div[role="heading"][aria-level="2"]') ||
     document.querySelector('span.x_subject') ||
-    document.querySelector('div._1x_z3');
+    document.querySelector('div._1x_z3') ||
+    document.querySelector('div[data-app-section="ItemHeader"] h2');
   const subject = subjectEl ? subjectEl.innerText.trim() : 'No Subject';
 
   // Sender
   const senderEl =
     document.querySelector('div[data-app-section="ItemHeader"] span[title*="@"]') ||
     document.querySelector('div._3f5X4 span') ||
-    document.querySelector('span[title*="@"]');
-  const sender = senderEl ? senderEl.getAttribute('title') || senderEl.innerText.trim() : '';
+    document.querySelector('span[title*="@"]') ||
+    document.querySelector('div.PersonaPane span');
+  const sender = senderEl
+    ? senderEl.getAttribute('title') || senderEl.innerText.trim()
+    : '';
 
   // Body
   const bodyEl =
     document.querySelector('div[aria-label="Message body"]') ||
     document.querySelector('div.ItemBody') ||
-    document.querySelector('div._2z995');
+    document.querySelector('div._2z995') ||
+    document.querySelector('div[role="document"]');
   const bodyText = bodyEl ? bodyEl.innerText.trim() : '';
 
   // Links
@@ -150,10 +182,19 @@ function extractOutlookEmail() {
   }
 
   // Attachments
-  const attachment_names = [];
-  document.querySelectorAll('div[aria-label*="attachment"], span[title*="."]').forEach((att) => {
-    const text = att.getAttribute('title') || att.innerText.trim();
-    if (text && text.includes('.')) attachment_names.push(text);
+  const attachments = [];
+  document.querySelectorAll('div[aria-label*="attachment"], span[title*="."], div._2xYyP').forEach((att) => {
+    const text = att.getAttribute('title') || att.getAttribute('aria-label') || att.innerText.trim();
+    if (text && text.includes('.')) {
+      const ext = `.${text.split('.').pop()}`;
+      attachments.push({
+        filename: text,
+        content_type: 'application/octet-stream',
+        extension: ext,
+        size: 0,
+        inline: false,
+      });
+    }
   });
 
   if (!sender && !bodyText && subject === 'No Subject') {
@@ -164,8 +205,9 @@ function extractOutlookEmail() {
     sender: sender,
     receiver: '',
     subject: subject,
-    body: bodyText,
+    body_text: bodyText,
+    body_html: bodyEl ? bodyEl.innerHTML : '',
     urls: Array.from(new Set(links)),
-    attachments: attachment_names,
+    attachments: attachments,
   };
 }

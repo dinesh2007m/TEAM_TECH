@@ -15,9 +15,14 @@ import {
 import { updateBadge, showNotification } from './utils/notifications.js';
 import { getSettings } from './utils/storage.js';
 
-// ─── Message Listener ─────────────────────────────────────────────────────────
+// ─── Service Worker Setup & Message Dispatcher ────────────────────────────────
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (!message || typeof message !== 'object' || !message.action) {
+    sendResponse({ success: false, error: 'Invalid message structure.' });
+    return false;
+  }
+
   const { action, payload } = message;
 
   if (action === 'CHECK_STATUS') {
@@ -54,33 +59,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (action === 'UPDATE_BADGE') {
-    updateBadge(payload.riskLevel);
+    if (payload && payload.riskLevel) {
+      updateBadge(payload.riskLevel);
+    }
     sendResponse({ success: true });
     return false;
   }
 });
 
 /**
- * Handle full analysis for DOM-extracted or parsed email JSON.
+ * Handle full analysis flow for DOM-extracted or parsed email JSON.
  */
 async function handleEmailAnalysis(emailData) {
-  // Phase 3: Phishing Analysis
+  if (!emailData || typeof emailData !== 'object') {
+    throw new Error('Invalid email input object.');
+  }
+
+  // Phase 3: Phishing Detection Engine
   const phishingRes = await analyzePhishing(emailData);
 
-  // Risk Payload construction
-  const riskPayload = {
-    scan_id: phishingRes.scan_id || `ext-${Date.now()}`,
-    sender: emailData.sender || null,
-    receiver: emailData.receiver || null,
-    subject: emailData.subject || null,
-    body: emailData.body || null,
-    phishing_indicators: phishingRes.indicators || [],
-    sandbox_indicators: [],
-    attachments: [],
-  };
-
   // Phase 5: Risk Engine Analysis
-  const riskRes = await analyzeRisk(riskPayload);
+  const riskRes = await analyzeRisk(emailData, phishingRes, null);
 
   const finalRiskLevel = riskRes.risk_level || phishingRes.risk_level || 'Low';
   updateBadge(finalRiskLevel);
@@ -88,7 +87,7 @@ async function handleEmailAnalysis(emailData) {
   showNotification(
     `scan_${Date.now()}`,
     `${finalRiskLevel.toUpperCase()} Risk Detected`,
-    `Subject: ${emailData.subject || 'No Subject'} • Risk Score: ${riskRes.risk_score || 0}/100`,
+    `Subject: ${emailData.subject || 'No Subject'} • Risk Score: ${riskRes.risk_score ?? 0}/100`,
     finalRiskLevel
   );
 
@@ -109,7 +108,7 @@ async function handleCompleteScan(fileData) {
   showNotification(
     `scan_${Date.now()}`,
     `Scan Complete (${riskLevel.toUpperCase()})`,
-    `Subject: ${res.subject || 'File Upload'} • Score: ${res.risk_score || 0}/100`,
+    `Subject: ${res.subject || 'File Upload'} • Score: ${res.risk_score ?? 0}/100`,
     riskLevel
   );
 
@@ -119,7 +118,7 @@ async function handleCompleteScan(fileData) {
 // ─── Auto-Analyze Gmail / Outlook Tab Listener ────────────────────────────────
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.status !== 'complete' || !tab.url) return;
+  if (changeInfo.status !== 'complete' || !tab || !tab.url) return;
 
   const isWebmail =
     tab.url.includes('mail.google.com') ||
@@ -133,7 +132,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
   // Send message to content script to extract visible email content
   chrome.tabs.sendMessage(tabId, { action: 'EXTRACT_EMAIL' }, async (response) => {
-    if (chrome.runtime.lastError || !response || !response.success) return;
+    if (chrome.runtime.lastError || !response || !response.success || !response.data) return;
 
     try {
       await handleEmailAnalysis(response.data);

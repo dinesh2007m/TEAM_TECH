@@ -1,13 +1,12 @@
 /**
  * popup.js
  * --------
- * Extension Popup UI Logic for TEAM_TECH.
- * Connects UI interactions to background service worker and API layer.
+ * Extension Popup UI Controller for TEAM_TECH.
+ * Zero browser alert popups, structured error boundaries, and defensive API rendering.
  */
 
 import {
   getSystemStatus,
-  uploadEmail,
   analyzeAttachment,
   getHistory,
   getReport,
@@ -27,6 +26,30 @@ document.addEventListener('DOMContentLoaded', () => {
   initHistory();
 });
 
+// ─── Notice Banner ─────────────────────────────────────────────────────────────
+
+function showNotice(msg, type = 'info', durationMs = 4000) {
+  const banner = document.getElementById('noticeBanner');
+  const text = document.getElementById('noticeMsg');
+
+  if (!banner || !text) return;
+
+  text.innerText = msg;
+  banner.className = `notice-banner ${type}`;
+  banner.classList.remove('hidden');
+
+  if (durationMs > 0) {
+    setTimeout(() => {
+      banner.classList.add('hidden');
+    }, durationMs);
+  }
+}
+
+function clearNotice() {
+  const banner = document.getElementById('noticeBanner');
+  if (banner) banner.classList.add('hidden');
+}
+
 // ─── Tabs Navigation ───────────────────────────────────────────────────────────
 
 function initTabs() {
@@ -35,6 +58,7 @@ function initTabs() {
 
   buttons.forEach((btn) => {
     btn.addEventListener('click', () => {
+      clearNotice();
       const tabId = btn.getAttribute('data-tab');
 
       buttons.forEach((b) => b.classList.remove('active'));
@@ -87,43 +111,49 @@ function initWebmailActions() {
 }
 
 async function analyzeCurrentWebmail(targetProvider) {
-  showLoading(`Scraping active ${targetProvider === 'gmail' ? 'Gmail' : 'Outlook'} email...`);
+  showLoading(`Extracting active ${targetProvider === 'gmail' ? 'Gmail' : 'Outlook'} email content...`);
 
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab) throw new Error('No active browser tab found.');
+    if (!tab || !tab.id) {
+      hideLoading();
+      showNotice('No active tab detected. Please open Gmail or Outlook.', 'error');
+      return;
+    }
 
     chrome.tabs.sendMessage(tab.id, { action: 'EXTRACT_EMAIL' }, async (response) => {
       if (chrome.runtime.lastError) {
         hideLoading();
-        alert(`Cannot access tab. Ensure you are on https://mail.google.com or https://outlook.office.com.`);
+        showNotice(`Cannot read webmail tab. Open an email on https://mail.google.com or https://outlook.office.com.`, 'error');
         return;
       }
 
-      if (!response || !response.success) {
+      if (!response || !response.success || !response.data) {
         hideLoading();
-        alert(response?.error || 'Could not extract email content from DOM. Please open an email first.');
+        showNotice(response?.error || 'No active email message detected in the DOM. Open an email view first.', 'error');
         return;
       }
 
-      updateLoadingMsg('Analyzing email with AI Phishing Engine...');
+      updateLoadingMsg('Analyzing email with AI Engine & Rule Processor...');
 
       chrome.runtime.sendMessage(
         { action: 'ANALYZE_PARSED_EMAIL', payload: response.data },
         (res) => {
           hideLoading();
           if (!res || !res.success) {
-            alert(res?.error || 'Analysis failed.');
+            showNotice(res?.error || 'Analysis failed. Check FastAPI backend logs.', 'error');
             return;
           }
-          renderResults(res.data.risk, response.data);
+          const riskData = res.data?.risk || res.data?.phishing || {};
+          renderResults(riskData, response.data);
           switchToTab('tab-results');
+          showNotice('Email analysis completed successfully.', 'success');
         }
       );
     });
   } catch (err) {
     hideLoading();
-    alert(err.message);
+    showNotice(err.message, 'error');
   }
 }
 
@@ -154,14 +184,14 @@ function initUploads() {
 }
 
 async function handleEmlUpload(file) {
-  showLoading(`Uploading ${file.name} to complete scan engine...`);
+  showLoading(`Uploading ${file.name} for 1-click complete scan...`);
   try {
     chrome.runtime.sendMessage(
       { action: 'EXECUTE_COMPLETE_SCAN', payload: file },
       (res) => {
         hideLoading();
         if (!res || !res.success) {
-          alert(res?.error || 'EML Scan failed.');
+          showNotice(res?.error || 'EML Scan failed.', 'error');
           return;
         }
         renderResults(res.data, {
@@ -170,16 +200,17 @@ async function handleEmlUpload(file) {
           scan_id: res.data.scan_id,
         });
         switchToTab('tab-results');
+        showNotice(`EML scan complete. Risk: ${res.data.risk_level}`, 'success');
       }
     );
   } catch (err) {
     hideLoading();
-    alert(err.message);
+    showNotice(err.message, 'error');
   }
 }
 
 async function handleAttachmentUpload(file) {
-  showLoading(`Analyzing file ${file.name} in static sandbox...`);
+  showLoading(`Analyzing ${file.name} in static sandbox...`);
   try {
     const res = await analyzeAttachment(file);
     hideLoading();
@@ -188,18 +219,19 @@ async function handleAttachmentUpload(file) {
         risk_level: res.risk_level,
         risk_score: res.risk_score,
         scan_id: `sandbox-${Date.now()}`,
-        recommendation: `Attachment file analysis completed for ${res.filename}. Entropy: ${res.analysis?.entropy?.toFixed(2) || 'N/A'}.`,
+        recommendation: `Attachment file static analysis completed for ${res.filename}. Entropy: ${res.analysis?.entropy?.toFixed(2) || 'N/A'}.`,
         indicators: res.indicators || [],
       },
       {
-        subject: `Attachment Sandbox: ${res.filename}`,
+        subject: `Sandbox File: ${res.filename}`,
         sender: 'Manual File Upload',
       }
     );
     switchToTab('tab-results');
+    showNotice(`Sandbox analysis complete for ${res.filename}`, 'success');
   } catch (err) {
     hideLoading();
-    alert(err.message);
+    showNotice(err.message, 'error');
   }
 }
 
@@ -236,8 +268,12 @@ function renderResults(riskData, metaData = {}) {
   document.getElementById('resSender').innerText = metaData.sender || riskData.sender || '—';
   document.getElementById('resScanId').innerText = activeScanId || '—';
 
-  document.getElementById('resRecommendation').innerText =
-    riskData.recommendation || 'No critical remediation action required.';
+  const recommendation =
+    riskData.recommendation ||
+    (Array.isArray(riskData.recommendations) ? riskData.recommendations.join(' ') : null) ||
+    'No critical remediation action required.';
+
+  document.getElementById('resRecommendation').innerText = recommendation;
 
   // Indicators list
   const indCount = document.getElementById('indCount');
@@ -248,35 +284,35 @@ function renderResults(riskData, metaData = {}) {
   indList.innerHTML = '';
 
   if (indicators.length === 0) {
-    indList.innerHTML = '<p className="text-xs text-muted">No threat indicators triggered.</p>';
+    indList.innerHTML = '<p className="text-muted text-center py-2">No threat indicators triggered.</p>';
   } else {
     indicators.forEach((ind) => {
       const div = document.createElement('div');
-      div.className = 'ind-item';
+      div.className = 'ind-badge-row';
       const sev = (ind.severity || 'low').toLowerCase();
       div.innerHTML = `
-        <span className="ind-badge ${sev}">${ind.severity || 'LOW'}</span>
-        <div>
+        <span className="badge-tag ${sev}">${ind.severity || 'LOW'}</span>
+        <div style="flex:1;">
           <p className="font-bold">${ind.name || 'Indicator'}</p>
-          <p className="text-muted">${ind.reason || ''}</p>
+          <p className="text-sub" style="font-size:9.5px;">${ind.reason || ''}</p>
         </div>
       `;
       indList.appendChild(div);
     });
   }
 
-  // Setup download buttons
+  // Download buttons
   const btnJson = document.getElementById('btnDownloadJson');
   const btnPdf = document.getElementById('btnDownloadPdf');
 
   btnJson.onclick = async () => {
-    if (!activeScanId) return alert('No active scan ID.');
+    if (!activeScanId) return showNotice('No active scan ID for JSON export.', 'error');
     const url = await getJSONUrl(activeScanId);
     window.open(url, '_blank');
   };
 
   btnPdf.onclick = async () => {
-    if (!activeScanId) return alert('No active scan ID.');
+    if (!activeScanId) return showNotice('No active scan ID for PDF export.', 'error');
     const url = await getPDFUrl(activeScanId);
     window.open(url, '_blank');
   };
@@ -304,22 +340,22 @@ async function loadHistoryList() {
 
     const scans = data.scans || [];
     if (scans.length === 0) {
-      container.innerHTML = '<p className="empty-desc text-center">No scan history recorded in SQLite.</p>';
+      container.innerHTML = '<p className="empty-subtitle text-center py-6">No scan records in SQLite database.</p>';
       return;
     }
 
     scans.forEach((scan) => {
       const item = document.createElement('div');
-      item.className = 'history-item';
+      item.className = 'history-card';
       const level = (scan.risk_level || 'Low').toLowerCase();
       item.innerHTML = `
-        <div>
-          <p className="font-bold text-xs">${scan.subject ? scan.subject.slice(0, 30) : 'Scan'}</p>
-          <p className="text-muted text-xs">${scan.sender || '—'} • ${new Date(scan.created_at).toLocaleDateString()}</p>
+        <div style="min-width:0; flex:1; margin-right:6px;">
+          <p className="font-bold text-main" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${scan.subject || 'No Subject'}</p>
+          <p className="text-sub" style="font-size:9.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">From: ${scan.sender || '—'} • ${new Date(scan.created_at).toLocaleDateString()}</p>
         </div>
-        <div style="display:flex; gap:6px; align-items:center;">
-          <span className="ind-badge ${level}">${scan.risk_level}</span>
-          <button className="btn btn-outline sm btn-view" data-id="${scan.scan_id}">View</button>
+        <div style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
+          <span className="badge-tag ${level}">${scan.risk_level}</span>
+          <button className="btn btn-secondary sm btn-view" data-id="${scan.scan_id}">View</button>
         </div>
       `;
       container.appendChild(item);
@@ -338,15 +374,16 @@ async function loadHistoryList() {
             scan_id: detail.scan_id,
           });
           switchToTab('tab-results');
+          showNotice(`Loaded report for ${id.slice(0, 13)}…`, 'success');
         } catch (e) {
           hideLoading();
-          alert(e.message);
+          showNotice(e.message, 'error');
         }
       });
     });
   } catch (err) {
     spinner.classList.add('hidden');
-    container.innerHTML = `<p className="text-xs text-red-400">Failed to load history: ${err.message}</p>`;
+    container.innerHTML = `<p className="notice-banner error">Failed to load history: ${err.message}</p>`;
   }
 }
 
@@ -368,7 +405,7 @@ async function initSettings() {
       autoAnalyze: autoInput.checked,
       enableNotifications: notifInput.checked,
     });
-    alert('Settings saved successfully!');
+    showNotice('Extension preferences saved successfully.', 'success');
     initStatus();
   });
 
@@ -377,10 +414,10 @@ async function initSettings() {
     try {
       const res = await getSystemStatus();
       const latency = Math.round(performance.now() - start);
-      alert(`Backend Status: ${res.status.toUpperCase()}\nLatency: ${latency} ms\nDatabase: ${res.database?.type || 'SQLite'} (${res.database?.total_scans || 0} scans)`);
+      showNotice(`Backend Status: ${res.status.toUpperCase()} (${latency} ms latency, ${res.database?.total_scans ?? 0} scans)`, 'success', 6000);
       initStatus();
     } catch (e) {
-      alert(`Backend Connection Error:\n${e.message}`);
+      showNotice(`Backend Connection Failed: ${e.message}`, 'error', 6000);
     }
   });
 }
