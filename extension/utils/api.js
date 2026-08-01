@@ -2,18 +2,19 @@
  * utils/api.js
  * ------------
  * API Layer for TEAM_TECH Chrome Extension.
- * Hardened payload normalization matching FastAPI backend schemas exactly.
+ * Schema-aligned API client with structured [API] logging and error boundaries.
  */
 
 import { getBackendUrl } from './storage.js';
 
 // ─── Response Parser & Error Formatter ───────────────────────────────────────
 
-async function handleResponse(response) {
+async function handleResponse(response, endpointName = '') {
   let data;
   try {
     data = await response.json();
-  } catch {
+  } catch (err) {
+    console.error(`[API] Unreadable JSON response from ${endpointName}:`, err);
     throw new Error(`Server returned unreadable response (HTTP ${response.status}).`);
   }
 
@@ -32,53 +33,64 @@ async function handleResponse(response) {
       : response.status >= 500 ? 'Server error. Please verify backend state.'
       : detail || `Error (HTTP ${response.status}).`;
 
+    console.error(`[API] Endpoint ${endpointName} failed with HTTP ${response.status}:`, msg);
     throw new Error(msg);
   }
 
+  console.log(`[API] Response 200 from ${endpointName}:`, data);
   return data;
 }
 
 async function requestGet(path) {
   const baseUrl = await getBackendUrl();
+  const fullUrl = `${baseUrl}${path}`;
+  console.log(`[API] GET Request -> ${fullUrl}`);
   let response;
   try {
-    response = await fetch(`${baseUrl}${path}`);
+    response = await fetch(fullUrl);
   } catch (err) {
+    console.error(`[API] Network failure fetching ${fullUrl}:`, err);
     throw new Error(`Cannot connect to TEAM_TECH backend at ${baseUrl}. Ensure FastAPI is running.`);
   }
-  return handleResponse(response);
+  return handleResponse(response, path);
 }
 
 async function requestPostJson(path, body) {
   const baseUrl = await getBackendUrl();
+  const fullUrl = `${baseUrl}${path}`;
+  console.log(`[API] POST JSON Request -> ${fullUrl}:`, body);
   let response;
   try {
-    response = await fetch(`${baseUrl}${path}`, {
+    response = await fetch(fullUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
   } catch (err) {
+    console.error(`[API] Network failure posting to ${fullUrl}:`, err);
     throw new Error(`Cannot connect to TEAM_TECH backend at ${baseUrl}. Ensure FastAPI is running.`);
   }
-  return handleResponse(response);
+  return handleResponse(response, path);
 }
 
 async function requestPostForm(path, formData) {
   const baseUrl = await getBackendUrl();
+  const fullUrl = `${baseUrl}${path}`;
+  console.log(`[API] POST Multipart Form Request -> ${fullUrl}`);
   let response;
   try {
-    response = await fetch(`${baseUrl}${path}`, {
+    response = await fetch(fullUrl, {
       method: 'POST',
       body: formData,
     });
   } catch (err) {
+    console.error(`[API] Network failure uploading to ${fullUrl}:`, err);
     throw new Error(`Cannot connect to TEAM_TECH backend at ${baseUrl}. Ensure FastAPI is running.`);
   }
-  return handleResponse(response);
+  return handleResponse(response, path);
 }
 
-// ─── Payload Normalizers matching Pydantic Schemas ─────────────────────────────
+// ─── Payload Normalizers matching FastAPI Pydantic Schemas ─────────────────────
 
 /**
  * Normalizes email data into PhishingAnalyzeRequest schema for POST /api/v1/phishing/analyze
@@ -87,7 +99,6 @@ export function normalizePhishingPayload(emailData = {}) {
   const bodyText = emailData.body_text || emailData.body || '';
   const urls = Array.isArray(emailData.urls) ? emailData.urls : [];
 
-  // Normalize attachments array into AttachmentInput objects
   const rawAttachments = Array.isArray(emailData.attachments) ? emailData.attachments : [];
   const attachments = rawAttachments.map((att) => {
     if (typeof att === 'string') {
@@ -129,40 +140,27 @@ export function normalizePhishingPayload(emailData = {}) {
 }
 
 /**
- * Normalizes risk data into RiskAnalyzeRequest schema for POST /api/v1/risk/analyze
+ * Normalizes risk data into RiskAnalysisRequest schema for POST /api/v1/risk/analyze
  */
-export function normalizeRiskPayload(parsedEmail, phishingResult, sandboxResult = null) {
-  const normalizedEmail = normalizePhishingPayload(parsedEmail);
+export function normalizeRiskPayload(parsedEmail = {}, phishingResult = {}, sandboxResult = null) {
+  const pInds = (phishingResult?.indicators || []).map((i) => ({
+    name: i.name || 'Indicator',
+    severity: i.severity || 'Low',
+    reason: i.reason || '',
+  }));
 
-  const normalizedPhishing = phishingResult ? {
-    status: phishingResult.status || 'success',
-    scan_id: phishingResult.scan_id || null,
-    indicator_count: typeof phishingResult.indicator_count === 'number' ? phishingResult.indicator_count : (phishingResult.indicators || []).length,
-    risk_level: phishingResult.risk_level || 'Low',
-    indicators: (phishingResult.indicators || []).map((i) => ({
-      name: i.name || 'Indicator',
-      severity: i.severity || 'Low',
-      reason: i.reason || '',
-    })),
-  } : null;
-
-  const normalizedSandbox = sandboxResult ? {
-    status: sandboxResult.status || 'success',
-    filename: sandboxResult.filename || 'attachment',
-    risk_score: typeof sandboxResult.risk_score === 'number' ? sandboxResult.risk_score : 0,
-    risk_level: sandboxResult.risk_level || 'Low',
-    analysis: sandboxResult.analysis || {},
-    indicators: (sandboxResult.indicators || []).map((i) => ({
-      name: i.name || 'Sandbox Indicator',
-      severity: i.severity || 'Low',
-      reason: i.reason || '',
-    })),
-  } : null;
+  const sInds = (sandboxResult?.indicators || []).map((i) => ({
+    name: i.name || 'Sandbox Indicator',
+    severity: i.severity || 'Low',
+    reason: i.reason || '',
+  }));
 
   return {
-    parsed_email: normalizedEmail,
-    phishing_result: normalizedPhishing,
-    sandbox_result: normalizedSandbox,
+    sender: parsedEmail.sender || null,
+    receiver: parsedEmail.receiver || null,
+    subject: parsedEmail.subject || null,
+    phishing_indicators: pInds,
+    sandbox_indicators: sInds,
   };
 }
 
@@ -172,7 +170,9 @@ export function normalizeRiskPayload(parsedEmail, phishingResult, sandboxResult 
  * Upload .eml file to POST /api/v1/upload/email
  */
 export async function uploadEmail(file) {
-  if (!file) throw new Error('No email file provided.');
+  if (!file || !(file instanceof File || file instanceof Blob)) {
+    throw new Error('Invalid file object provided for upload.');
+  }
   const formData = new FormData();
   formData.append('file', file);
   return requestPostForm('/api/v1/upload/email', formData);
@@ -194,7 +194,9 @@ export async function analyzePhishing(parsedEmail, scanId = null) {
  * Upload attachment to POST /api/v1/sandbox/analyze
  */
 export async function analyzeAttachment(file) {
-  if (!file) throw new Error('No attachment file provided.');
+  if (!file || !(file instanceof File || file instanceof Blob)) {
+    throw new Error('Invalid attachment file object provided for sandbox analysis.');
+  }
   const formData = new FormData();
   formData.append('file', file);
   return requestPostForm('/api/v1/sandbox/analyze', formData);
@@ -212,7 +214,9 @@ export async function analyzeRisk(parsedEmail, phishingResult, sandboxResult = n
  * Execute 1-click complete scan via POST /api/v1/scan
  */
 export async function executeCompleteScan(file) {
-  if (!file) throw new Error('No file provided for complete scan.');
+  if (!file || !(file instanceof File || file instanceof Blob)) {
+    throw new Error('Invalid file provided for complete scan.');
+  }
   const formData = new FormData();
   formData.append('file', file);
   return requestPostForm('/api/v1/scan', formData);
@@ -245,7 +249,7 @@ export async function deleteScan(scanId) {
   } catch (err) {
     throw new Error(`Cannot connect to backend to delete scan ${scanId}.`);
   }
-  return handleResponse(response);
+  return handleResponse(response, `/api/v1/history/${scanId}`);
 }
 
 /**
