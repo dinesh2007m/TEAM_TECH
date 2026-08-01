@@ -276,7 +276,7 @@ def get_report_data(scan_id: str, db: Session = Depends(get_db)) -> Dict[str, An
                 "size": a.size,
                 "risk": a.risk,
             }
-            for i in record.attachments
+            for a in record.attachments
         ],
         "report_detail": json_data,
     }

@@ -205,12 +205,32 @@ export async function analyzeAttachment(file) {
 export async function analyzeRisk(payload) {
   console.log('[emailService] Sending combined data to Explainable Risk Engine...');
 
+  const pInds = (payload?.phishing_result?.indicators || payload?.phishing_indicators || []).map((i) => ({
+    name: i.name || 'Indicator',
+    severity: i.severity || 'Low',
+    reason: i.reason || '',
+  }));
+
+  const sInds = (payload?.sandbox_result?.indicators || payload?.sandbox_indicators || []).map((i) => ({
+    name: i.name || 'Sandbox Indicator',
+    severity: i.severity || 'Low',
+    reason: i.reason || '',
+  }));
+
+  const riskPayload = {
+    sender: payload?.parsed_email?.sender || payload?.sender || null,
+    receiver: payload?.parsed_email?.receiver || payload?.receiver || null,
+    subject: payload?.parsed_email?.subject || payload?.subject || null,
+    phishing_indicators: pInds,
+    sandbox_indicators: sInds,
+  };
+
   let response;
   try {
     response = await fetch(`${API_BASE_URL}/api/v1/risk/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(riskPayload),
     });
   } catch (networkError) {
     console.error('[emailService] Risk Engine network error:', networkError);

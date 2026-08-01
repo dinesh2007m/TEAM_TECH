@@ -55,7 +55,7 @@ export async function showNotification(notificationId, title, message, type = 'S
 
   const options = {
     type: 'basic',
-    iconUrl: '../icons/icon128.png',
+    iconUrl: 'icons/icon128.png',
     title: `TEAM_TECH: ${title}`,
     message: message,
     priority: type === 'High' || type === 'Critical' ? 2 : 1,
