@@ -11,11 +11,11 @@
   },
   {
     "id": "act-002",
-    "title": "Digital Twin Created",
-    "description": "Spawned isolated virtual replica node #TWIN-881 for payload detonation",
+    "title": "Scan Environment Initialized",
+    "description": "Spawned isolated sandbox container #ENV-881 for payload detonation",
     "timestamp": "14:02:18",
-    "type": "digital-twin",
-    "icon": "Cpu",
+    "type": "sandbox",
+    "icon": "Server",
     "badge": "ACTIVE",
     "badgeVariant": "primary"
   },

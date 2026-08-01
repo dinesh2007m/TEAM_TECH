@@ -3,7 +3,7 @@ import { Search, X, Command } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 export const SearchBar = ({
-  placeholder = 'Search threat nodes, CVEs, logs, digital twin assets...',
+  placeholder = 'Search threat nodes, CVEs, logs, assets...',
   value: externalValue,
   onChange,
   onClear,

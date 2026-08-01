@@ -18,18 +18,18 @@
     "change": "-3",
     "trend": "down",
     "variant": "warning",
-    "icon": "GitFork",
+    "icon": "ShieldCheck",
     "subtitle": "4 critical, 8 high priority"
   },
   {
     "id": "stat-003",
-    "title": "Protected Digital Twin Assets",
+    "title": "Protected Enterprise Assets",
     "value": "14,892",
-    "status": "Syncing",
+    "status": "Monitored",
     "change": "+1,240",
     "trend": "up",
     "variant": "success",
-    "icon": "Cpu",
+    "icon": "ShieldCheck",
     "subtitle": "Across AWS, Azure, K8s"
   },
   {

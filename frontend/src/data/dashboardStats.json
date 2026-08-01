@@ -61,14 +61,14 @@
   },
   {
     "id": "stat-twins",
-    "title": "Digital Twins Protected",
+    "title": "Protected Enterprise Assets",
     "value": 1420,
     "displayValue": "1,420",
-    "status": "100% Synced",
+    "status": "100% Monitored",
     "change": "+140 nodes",
     "trend": "up",
     "variant": "primary",
-    "icon": "Cpu",
+    "icon": "ShieldCheck",
     "subtitle": "AWS, Azure, K8s topology"
   }
 ]
