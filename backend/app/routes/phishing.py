@@ -11,7 +11,7 @@ affect or share state with any Phase 1 or Phase 2 endpoints.
 """
 
 import logging
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 
 from app.schemas.phishing import (
     PhishingAnalyzeRequest,
@@ -19,6 +19,7 @@ from app.schemas.phishing import (
     SeverityLevel,
 )
 from app.services.phishing_detector import run_detection, _overall_risk
+from app.services.scan_persistence import persist_scan
 
 logger = logging.getLogger("app.routes.phishing")
 
@@ -73,7 +74,10 @@ router = APIRouter(prefix="/phishing", tags=["Phishing Detection"])
         },
     },
 )
-async def analyze_email(payload: PhishingAnalyzeRequest) -> PhishingAnalyzeResponse:
+async def analyze_email(
+    payload: PhishingAnalyzeRequest,
+    background_tasks: BackgroundTasks,
+) -> PhishingAnalyzeResponse:
     """
     Run the phishing detection engine against a parsed email payload.
 
@@ -104,9 +108,27 @@ async def analyze_email(payload: PhishingAnalyzeRequest) -> PhishingAnalyzeRespo
         risk,
     )
 
-    return PhishingAnalyzeResponse(
+    import uuid as _uuid
+    _scan_id = payload.scan_id or payload.email_id or str(_uuid.uuid4())
+
+    response = PhishingAnalyzeResponse(
         status="success",
+        scan_id=_scan_id,
         indicator_count=len(indicators),
         risk_level=risk,
         indicators=indicators,
     )
+
+    # ── Auto-save: persist the scan to SQLite ─────────────────────────────────
+    # Synchronously call persist_scan or use background task to guarantee database save
+    try:
+        persist_scan(
+            scan_id=_scan_id,
+            parsed_email=payload,
+            phishing_resp=response,
+            sandbox_resp=None,
+        )
+    except Exception as save_err:
+        logger.warning(f"Background persist scan exception for {_scan_id}: {save_err}")
+
+    return response

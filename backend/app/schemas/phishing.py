@@ -56,6 +56,14 @@ class PhishingAnalyzeRequest(BaseModel):
     All fields are optional; the engine gracefully handles absent data.
     """
 
+    scan_id: Optional[str] = Field(
+        None,
+        description="Optional unique scan ID (from upload endpoint) to synchronize persistence across endpoints.",
+    )
+    email_id: Optional[str] = Field(
+        None,
+        description="Alias for scan_id",
+    )
     sender: Optional[str] = Field(
         None,
         description="From header value (may include display name)",
@@ -162,6 +170,10 @@ class PhishingAnalyzeResponse(BaseModel):
     status: str = Field(
         "success",
         description="Always 'success' on a 200 response",
+    )
+    scan_id: Optional[str] = Field(
+        None,
+        description="Unique scan ID associated with this analysis",
     )
     indicator_count: int = Field(
         ...,

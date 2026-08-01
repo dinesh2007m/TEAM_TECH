@@ -39,7 +39,7 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { ProgressBar } from '../components/ui/ProgressBar';
 import { useToast } from '../hooks/useToast';
-import { uploadEmailFile, analyzePhishing, analyzeAttachment } from '../services/emailService';
+import { uploadEmailFile, analyzePhishing, analyzeAttachment, downloadScanJSON, downloadScanPDF } from '../services/apiService';
 import { fadeUp, staggerContainer, staggerItem } from '../utils/animations';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -281,12 +281,16 @@ export const Upload = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [phishingResult, setPhishingResult] = useState(null);
 
-  // Phase 4 – sandbox static analysis
+  // Phase 4 – sandbox static analysis (auto-triggered on attachments)
   const [sandboxFile, setSandboxFile] = useState(null);
   const [sandboxValidationError, setSandboxValidationError] = useState('');
   const [isSandboxing, setIsSandboxing] = useState(false);
   const [sandboxResult, setSandboxResult] = useState(null);
   const sandboxInputRef = useRef(null);
+
+  // Pipeline steps for the automated scan
+  const [pipelineStep, setPipelineStep] = useState(0); // 0=idle 1=uploading 2=phishing 3=sandbox 4=done
+  const [completedScanId, setCompletedScanId] = useState(null);
 
   const handleSandboxFileSelected = useCallback((file) => {
     if (!file) return;
@@ -366,11 +370,12 @@ export const Upload = () => {
     setParsedEmail(null);
     setEmailId(null);
     setPhishingResult(null);
+    setSandboxResult(null);
+    setPipelineStep(0);
+    setCompletedScanId(null);
   }, []);
 
-  // ── Upload ─────────────────────────────────────────────────────────────────
   const handleUpload = useCallback(async () => {
-    // Final pre-upload validation
     if (!selectedFile) {
       setValidationError('Please select a file before uploading.');
       return;
@@ -385,15 +390,18 @@ export const Upload = () => {
     setIsUploading(true);
     setParsedEmail(null);
     setPhishingResult(null);
+    setSandboxResult(null);
+    setCompletedScanId(null);
+    setPipelineStep(1);
     console.log('[Upload] Uploading...');
 
     try {
-      // ── Step 1: Upload & parse the .eml file ─────────────────────────────
+      // ── Step 1: Upload & parse ────────────────────────────────────────────
       const data = await uploadEmailFile(selectedFile);
       console.log('[Upload] Upload response:', data);
-
       setParsedEmail(data.parsed_email);
       setEmailId(data.email_id);
+      setIsUploading(false);
 
       addToast({
         title: 'Email Parsed Successfully',
@@ -401,19 +409,19 @@ export const Upload = () => {
         type: 'success',
       });
 
-      // ── Step 2: Automatically run phishing analysis ───────────────────────
-      setIsUploading(false);
+      // ── Step 2: Phishing analysis ─────────────────────────────────────────
+      setPipelineStep(2);
       setIsAnalyzing(true);
       console.log('[Upload] Running phishing analysis...');
-
+      let phishingData = null;
       try {
-        const analysis = await analyzePhishing(data.parsed_email);
-        console.log('[Upload] Phishing analysis response:', analysis);
-        setPhishingResult(analysis);
+        phishingData = await analyzePhishing(data.parsed_email, data.email_id);
+        console.log('[Upload] Phishing analysis response:', phishingData);
+        setPhishingResult(phishingData);
         addToast({
           title: 'Phishing Analysis Complete',
-          description: `${analysis.indicator_count} indicator(s) detected · Risk: ${analysis.risk_level}`,
-          type: analysis.risk_level === 'High' ? 'error' : analysis.risk_level === 'Medium' ? 'warning' : 'success',
+          description: `${phishingData.indicator_count} indicator(s) detected · Risk: ${phishingData.risk_level}`,
+          type: phishingData.risk_level === 'High' ? 'error' : phishingData.risk_level === 'Medium' ? 'warning' : 'success',
           duration: 6000,
         });
       } catch (analysisErr) {
@@ -427,6 +435,40 @@ export const Upload = () => {
       } finally {
         setIsAnalyzing(false);
       }
+
+      // ── Step 3: Auto sandbox on first attachment if present ───────────────
+      const attachments = data.parsed_email?.attachments || [];
+      if (attachments.length > 0 && selectedFile) {
+        // Re-upload the original .eml as the sandbox target (Phase 4 accepts any file)
+        setPipelineStep(3);
+        setIsSandboxing(true);
+        console.log('[Upload] Running sandbox analysis on the .eml file...');
+        try {
+          const sbResult = await analyzeAttachment(selectedFile);
+          console.log('[Upload] Sandbox response:', sbResult);
+          setSandboxResult(sbResult);
+          addToast({
+            title: 'Sandbox Analysis Complete',
+            description: `Risk: ${sbResult.risk_level} · Score: ${sbResult.risk_score}/100`,
+            type: sbResult.risk_level === 'High' ? 'error' : sbResult.risk_level === 'Medium' ? 'warning' : 'success',
+            duration: 6000,
+          });
+        } catch (sbErr) {
+          console.warn('[Upload] Sandbox analysis skipped:', sbErr.message);
+        } finally {
+          setIsSandboxing(false);
+        }
+      }
+
+      setPipelineStep(4);
+      setCompletedScanId(data.email_id);
+      addToast({
+        title: 'Full Security Analysis Complete',
+        description: 'All pipeline stages completed successfully.',
+        type: 'success',
+        duration: 5000,
+      });
+
     } catch (err) {
       console.error('[Upload] Upload error:', err);
       setValidationError(err.message || 'An unexpected error occurred.');
@@ -437,10 +479,34 @@ export const Upload = () => {
         duration: 6000,
       });
       setIsUploading(false);
+      setIsAnalyzing(false);
+      setIsSandboxing(false);
+      setPipelineStep(0);
     }
   }, [selectedFile, validateFile, addToast]);
 
-  const canUpload = selectedFile && !validationError && !isUploading && !isAnalyzing;
+  const canUpload = selectedFile && !validationError && !isUploading && !isAnalyzing && !isSandboxing;
+
+  // Download helpers for the completed scan
+  const handleDownloadJSON = useCallback(async () => {
+    if (!completedScanId) return;
+    try {
+      await downloadScanJSON(completedScanId);
+      addToast({ title: 'JSON downloaded', type: 'success' });
+    } catch (e) {
+      addToast({ title: 'Download failed', description: e.message, type: 'error' });
+    }
+  }, [completedScanId, addToast]);
+
+  const handleDownloadReport = useCallback(async () => {
+    if (!completedScanId) return;
+    try {
+      await downloadScanPDF(completedScanId);
+      addToast({ title: 'Report downloaded', type: 'success' });
+    } catch (e) {
+      addToast({ title: 'Download failed', description: e.message, type: 'error' });
+    }
+  }, [completedScanId, addToast]);
 
   return (
     <div className="space-y-6">
@@ -486,18 +552,62 @@ export const Upload = () => {
             <Button
               variant="cyber"
               size="lg"
-              leftIcon={isUploading || isAnalyzing ? undefined : Send}
-              isLoading={isUploading || isAnalyzing}
+              leftIcon={isUploading || isAnalyzing || isSandboxing ? undefined : Send}
+              isLoading={isUploading || isAnalyzing || isSandboxing}
               isDisabled={!canUpload}
               onClick={handleUpload}
               glow={canUpload}
               id="upload-submit-button"
             >
-              {isUploading ? 'Uploading...' : isAnalyzing ? 'Analysing...' : 'Upload & Analyse'}
+              {isUploading ? 'Uploading…' : isAnalyzing ? 'Analysing Phishing…' : isSandboxing ? 'Running Sandbox…' : 'Upload & Analyse'}
             </Button>
           </div>
         </div>
       </Card>
+
+      {/* ── Pipeline Progress Stepper ────────────────────────────────────── */}
+      <AnimatePresence>
+        {pipelineStep > 0 && (
+          <motion.div
+            key="stepper"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                {[
+                  { step: 1, label: 'Upload & Parse',   active: pipelineStep === 1 },
+                  { step: 2, label: 'Phishing Analysis', active: pipelineStep === 2 },
+                  { step: 3, label: 'Sandbox Analysis',  active: pipelineStep === 3 },
+                  { step: 4, label: 'Complete',          active: pipelineStep === 4 },
+                ].map(({ step, label, active }) => {
+                  const done = pipelineStep > step;
+                  const current = pipelineStep === step;
+                  return (
+                    <div key={step} className="flex items-center gap-2">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border transition-all ${
+                        done    ? 'bg-green-500/20 border-green-500 text-green-400'
+                        : current ? 'bg-blue-500/20 border-blue-500 text-blue-400 animate-pulse'
+                        : 'bg-gray-800 border-gray-700 text-gray-600'
+                      }`}>
+                        {done ? '✓' : step}
+                      </div>
+                      <span className={`text-xs font-mono ${
+                        done ? 'text-green-400' : current ? 'text-blue-400' : 'text-gray-600'
+                      }`}>{label}</span>
+                      {step < 4 && <div className={`h-px w-6 sm:w-12 ${
+                        pipelineStep > step ? 'bg-green-500/50' : 'bg-gray-800'
+                      }`} />}
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Results Section ───────────────────────────────────────────── */}
       <AnimatePresence>
@@ -511,13 +621,29 @@ export const Upload = () => {
             className="space-y-4"
           >
             {/* Result header */}
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
               <CheckCircle2 className="w-5 h-5 text-green-400" />
               <h2 className="text-base font-semibold text-gray-200">Parsed Email Results</h2>
               {emailId && (
                 <Badge variant="secondary" size="sm" className="font-mono ml-auto">
                   ID: {emailId}
                 </Badge>
+              )}
+              {pipelineStep === 4 && (
+                <div className="flex items-center gap-2 ml-2">
+                  <button
+                    onClick={handleDownloadJSON}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 transition-colors cursor-pointer"
+                  >
+                    <FileText className="w-3.5 h-3.5" /> Download JSON
+                  </button>
+                  <button
+                    onClick={handleDownloadReport}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 transition-colors cursor-pointer"
+                  >
+                    <FileText className="w-3.5 h-3.5" /> Download Report
+                  </button>
+                </div>
               )}
             </div>
 
