@@ -1,9 +1,10 @@
 /**
  * content.js
  * ----------
- * DOM Extraction Content Script for Gmail and Outlook.
- * Reads ONLY visible email content currently displayed on the page.
- * Standardized logging with [Content] tag. Zero credentials, cookies, or auth tokens accessed.
+ * DOM Content Script for Gmail and Outlook.
+ * For Gmail: Reads ONLY the message ID from the URL/DOM so the extension can fetch via official Gmail API.
+ * For Outlook: Reads visible email content currently displayed on the page.
+ * Safe, read-only extraction — zero credentials, cookies, or auth tokens accessed.
  */
 
 console.log('[Content] TEAM_TECH Content Script loaded on hostname:', window.location.hostname);
@@ -18,23 +19,49 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   try {
-    const emailData = extractVisibleEmail();
-    if (!emailData) {
-      console.warn('[Content] No active email message detected in current DOM view.');
+    const provider = detectProvider();
+    console.log(`[Content] Executing extraction router for provider '${provider}'...`);
+
+    if (provider === 'gmail') {
+      const gmailInfo = extractGmailMessageId();
+      if (!gmailInfo || !gmailInfo.messageId) {
+        sendResponse({
+          success: false,
+          error: 'No open Gmail email message detected. Please open an email first.',
+        });
+      } else {
+        console.log('[Content] Extracted Gmail Message ID:', gmailInfo.messageId);
+        sendResponse({
+          success: true,
+          provider: 'gmail',
+          useGmailApi: true,
+          messageId: gmailInfo.messageId,
+          data: null,
+        });
+      }
+    } else if (provider === 'outlook') {
+      const emailData = extractOutlookEmail();
+      if (!emailData) {
+        sendResponse({
+          success: false,
+          error: 'No active Outlook email message detected in the DOM. Please open an email first.',
+        });
+      } else {
+        sendResponse({
+          success: true,
+          provider: 'outlook',
+          useGmailApi: false,
+          data: emailData,
+        });
+      }
+    } else {
       sendResponse({
         success: false,
-        error: 'No active email message detected in the DOM. Please open an email first.',
-      });
-    } else {
-      console.log('[Content] Email content successfully extracted:', emailData);
-      sendResponse({
-        success: true,
-        provider: detectProvider(),
-        data: emailData,
+        error: 'Unsupported webmail provider. Navigate to Gmail or Outlook.',
       });
     }
   } catch (err) {
-    console.error('[Content] Error during DOM extraction:', err);
+    console.error('[Content] Error during extraction:', err);
     sendResponse({ success: false, error: err.message });
   }
   return true;
@@ -49,111 +76,43 @@ function detectProvider() {
   return 'unknown';
 }
 
-// ─── Main Extraction Router ───────────────────────────────────────────────────
+// ─── Gmail Message ID Extractor ───────────────────────────────────────────────
 
-function extractVisibleEmail() {
-  const provider = detectProvider();
-  console.log(`[Content] Executing extraction router for provider '${provider}'...`);
+/**
+ * Extracts ONLY the active Gmail Message ID from URL hash or DOM attribute.
+ * Zero email content scraping.
+ * @returns {{ messageId: string | null }}
+ */
+function extractGmailMessageId() {
+  // Method 1: Check DOM attributes on expanded message view
+  const msgEl =
+    document.querySelector('div.gE.iv[data-message-id]') ||
+    document.querySelector('div[data-legacy-message-id]') ||
+    document.querySelector('div.gs[data-message-id]');
 
-  if (provider === 'gmail') {
-    return extractGmailEmail();
-  } else if (provider === 'outlook') {
-    return extractOutlookEmail();
-  }
-  return null;
-}
-
-// ─── Gmail DOM Extractor ──────────────────────────────────────────────────────
-
-function extractGmailEmail() {
-  // Subject selectors chain
-  const subjectEl =
-    document.querySelector('h2.hP') ||
-    document.querySelector('div.ha h2') ||
-    document.querySelector('span.bog') ||
-    document.querySelector('div[role="main"] h2');
-
-  const subject = subjectEl ? subjectEl.innerText.trim() : 'No Subject';
-
-  // Active expanded message view container
-  const messageContainer =
-    document.querySelector('div.gE.iv') ||
-    document.querySelector('div.gs') ||
-    document.querySelector('div.a3s.aiL') ||
-    document.querySelector('div[role="main"]');
-
-  if (!messageContainer && !subjectEl) {
-    console.warn('[Content] Gmail message view elements not found.');
-    return null;
+  if (msgEl) {
+    const id = msgEl.getAttribute('data-legacy-message-id') || msgEl.getAttribute('data-message-id');
+    if (id) return { messageId: id };
   }
 
-  // Sender email selectors chain
-  const senderEl =
-    document.querySelector('span.gD') ||
-    document.querySelector('span[email]') ||
-    document.querySelector('span.go') ||
-    document.querySelector('div.gE.iv span[email]');
-
-  const senderEmail = senderEl
-    ? senderEl.getAttribute('email') || senderEl.innerText.trim()
-    : '';
-
-  // Receiver email selectors chain
-  const receiverEl =
-    document.querySelector('span.g2') ||
-    document.querySelector('span.hb') ||
-    document.querySelector('td.gL span[email]');
-
-  const receiver = receiverEl
-    ? receiverEl.getAttribute('email') || receiverEl.innerText.trim()
-    : '';
-
-  // Body Content selectors chain
-  const bodyEl =
-    document.querySelector('div.a3s.aiL') ||
-    document.querySelector('div[dir="ltr"]') ||
-    document.querySelector('div.ii.gt');
-
-  const bodyText = bodyEl ? bodyEl.innerText.trim() : '';
-
-  // Links extraction
-  const links = [];
-  if (bodyEl) {
-    bodyEl.querySelectorAll('a[href]').forEach((a) => {
-      const href = a.getAttribute('href');
-      if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
-        links.push(href);
-      }
-    });
-  }
-
-  // Attachment filenames extraction
-  const attachments = [];
-  document.querySelectorAll('div.aZo, span.aV3, div.aqN, div[role="button"][aria-label*="Attachment"]').forEach((att) => {
-    const text = att.getAttribute('aria-label') || att.innerText.trim();
-    if (text) {
-      const ext = text.includes('.') ? `.${text.split('.').pop()}` : undefined;
-      attachments.push({
-        filename: text,
-        content_type: 'application/octet-stream',
-        extension: ext,
-        size: 0,
-        inline: false,
-      });
+  // Method 2: Extract ID from URL Hash (e.g. #inbox/FMfcgzGv... or #all/FMfcgzGv...)
+  const hash = window.location.hash || '';
+  const hashParts = hash.split('/');
+  if (hashParts.length >= 2) {
+    const lastPart = hashParts[hashParts.length - 1];
+    if (lastPart && lastPart.length > 5 && !lastPart.includes('?')) {
+      return { messageId: lastPart };
     }
-  });
+  }
 
-  console.log(`[Content] Gmail extraction results -> Sender: '${senderEmail}', Subject: '${subject}', Links: ${links.length}`);
+  // Method 3: Fallback selector for span.bog or data-thread-id
+  const threadEl = document.querySelector('div.nH.hx[role="main"]');
+  if (threadEl) {
+    const id = threadEl.getAttribute('data-thread-id');
+    if (id) return { messageId: id };
+  }
 
-  return {
-    sender: senderEmail,
-    receiver: receiver,
-    subject: subject,
-    body_text: bodyText,
-    body_html: bodyEl ? bodyEl.innerHTML : '',
-    urls: Array.from(new Set(links)),
-    attachments: attachments,
-  };
+  return { messageId: null };
 }
 
 // ─── Outlook DOM Extractor ────────────────────────────────────────────────────

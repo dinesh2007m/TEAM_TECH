@@ -2,13 +2,12 @@
  * popup.js
  * --------
  * Extension Popup Controller for TEAM_TECH.
+ * Integrates Google OAuth 2.0 & Official Gmail API with zero DOM scraping.
  * Standardized logging with [Popup] tag. Native File upload handling.
- * Zero browser alert popups, structured error boundaries, and defensive API rendering.
  */
 
 import {
   getSystemStatus,
-  uploadEmail,
   analyzeAttachment,
   executeCompleteScan,
   getHistory,
@@ -16,14 +15,17 @@ import {
   getPDFUrl,
   getJSONUrl,
 } from './utils/api.js';
+import { login as gmailLogin, logout as gmailLogout, getProfile as getGmailProfile } from './services/gmailApi.js';
 import { getSettings, saveSettings } from './utils/storage.js';
 
 let activeScanId = null;
+let googleUserEmail = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[Popup] DOM Content Loaded. Initializing Popup Controller...');
   initTabs();
   initStatus();
+  initGoogleAuth();
   initUploads();
   initWebmailActions();
   initSettings();
@@ -54,6 +56,70 @@ function clearNotice() {
   if (banner) banner.classList.add('hidden');
 }
 
+// ─── Google OAuth 2.0 Manager ──────────────────────────────────────────────────
+
+async function initGoogleAuth() {
+  const authBtn = document.getElementById('btnGoogleAuth');
+  const emailTxt = document.getElementById('googleAccountEmail');
+
+  if (!authBtn || !emailTxt) return;
+
+  // Silent check for cached auth token
+  try {
+    const profile = await getGmailProfile();
+    if (profile && profile.emailAddress) {
+      googleUserEmail = profile.emailAddress;
+      emailTxt.innerText = `Signed in: ${googleUserEmail}`;
+      authBtn.innerText = 'Logout';
+      authBtn.classList.remove('btn-primary');
+      authBtn.classList.add('btn-secondary');
+      console.log('[Popup] Silent Google OAuth check: Signed in as', googleUserEmail);
+    }
+  } catch (err) {
+    console.log('[Popup] Silent Google OAuth check: Not authenticated.');
+    emailTxt.innerText = 'Not Authenticated';
+    authBtn.innerText = 'Sign in with Google';
+    authBtn.classList.remove('btn-secondary');
+    authBtn.classList.add('btn-primary');
+  }
+
+  authBtn.addEventListener('click', async () => {
+    if (googleUserEmail) {
+      // Logout flow
+      showLoading('Logging out of Google OAuth...');
+      try {
+        await gmailLogout();
+        googleUserEmail = null;
+        emailTxt.innerText = 'Not Authenticated';
+        authBtn.innerText = 'Sign in with Google';
+        authBtn.classList.remove('btn-secondary');
+        authBtn.classList.add('btn-primary');
+        hideLoading();
+        showNotice('Successfully logged out of Google Account.', 'success');
+      } catch (e) {
+        hideLoading();
+        showNotice(`Logout Error: ${e.message}`, 'error');
+      }
+    } else {
+      // Login flow
+      showLoading('Connecting to Google Accounts...');
+      try {
+        const { profile } = await gmailLogin(true);
+        googleUserEmail = profile.emailAddress;
+        emailTxt.innerText = `Signed in: ${googleUserEmail}`;
+        authBtn.innerText = 'Logout';
+        authBtn.classList.remove('btn-primary');
+        authBtn.classList.add('btn-secondary');
+        hideLoading();
+        showNotice(`Authenticated as ${googleUserEmail}`, 'success');
+      } catch (e) {
+        hideLoading();
+        showNotice(`Authentication Failed: ${e.message}`, 'error');
+      }
+    }
+  });
+}
+
 // ─── Tabs Navigation ───────────────────────────────────────────────────────────
 
 function initTabs() {
@@ -80,7 +146,7 @@ function initTabs() {
   });
 }
 
-// ─── Status Check ──────────────────────────────────────────────────────────────
+// ─── Backend System Status Check ──────────────────────────────────────────────
 
 async function initStatus() {
   const badge = document.getElementById('statusBadge');
@@ -104,7 +170,7 @@ async function initStatus() {
   }
 }
 
-// ─── Webmail DOM Analysis Actions ──────────────────────────────────────────────
+// ─── Webmail Actions (Gmail API & Outlook DOM) ────────────────────────────────
 
 function initWebmailActions() {
   const btnGmail = document.getElementById('btnAnalyzeGmail');
@@ -112,50 +178,91 @@ function initWebmailActions() {
 
   if (btnGmail) {
     btnGmail.addEventListener('click', () => {
-      console.log('[Popup] Button clicked: Analyze Current Gmail Email');
-      analyzeCurrentWebmail('gmail');
+      console.log('[Popup] Button clicked: Analyze Current Gmail Email (Gmail API)');
+      analyzeGmailMessageViaApi();
     });
   }
+
   if (btnOutlook) {
     btnOutlook.addEventListener('click', () => {
       console.log('[Popup] Button clicked: Analyze Current Outlook Email');
-      analyzeCurrentWebmail('outlook');
+      analyzeOutlookViaDom();
     });
   }
 }
 
-async function analyzeCurrentWebmail(targetProvider) {
-  showLoading(`Extracting active ${targetProvider === 'gmail' ? 'Gmail' : 'Outlook'} email content...`);
+async function analyzeGmailMessageViaApi() {
+  showLoading('Checking active Gmail tab for Message ID...');
 
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab || !tab.id) {
+    if (!tab || !tab.id || !tab.url.includes('mail.google.com')) {
       hideLoading();
-      showNotice('No active browser tab detected. Please open Gmail or Outlook.', 'error');
+      showNotice('Please open an active email on Gmail (mail.google.com).', 'error');
       return;
     }
 
-    console.log(`[Popup] Sending EXTRACT_EMAIL message to tab ID ${tab.id} (${tab.url})...`);
+    console.log(`[Popup] Querying content script for Gmail Message ID on tab ${tab.id}...`);
     chrome.tabs.sendMessage(tab.id, { action: 'EXTRACT_EMAIL' }, async (response) => {
       if (chrome.runtime.lastError) {
-        console.error('[Popup] Message passing error to tab script:', chrome.runtime.lastError.message);
         hideLoading();
-        showNotice(`Cannot read webmail tab. Open an email view on https://mail.google.com or https://outlook.office.com.`, 'error');
+        showNotice(`Tab Script Error: ${chrome.runtime.lastError.message}`, 'error');
         return;
       }
 
-      if (!response || !response.success || !response.data) {
-        console.warn('[Popup] Content script returned extraction failure:', response);
+      if (!response || !response.success || !response.messageId) {
         hideLoading();
-        showNotice(response?.error || 'No active email message detected in the DOM. Open an email view first.', 'error');
+        showNotice(response?.error || 'No active Gmail email message detected. Open an email first.', 'error');
+        return;
+      }
+
+      const messageId = response.messageId;
+      console.log(`[Popup] Message ID '${messageId}' detected. Requesting Gmail API analysis via Background...`);
+      updateLoadingMsg('Fetching email headers, body & attachments via Official Gmail API...');
+
+      chrome.runtime.sendMessage({ action: 'PROCESS_GMAIL_MESSAGE', payload: { messageId } }, (bgResponse) => {
+        hideLoading();
+        if (chrome.runtime.lastError || !bgResponse || !bgResponse.success) {
+          const err = chrome.runtime.lastError?.message || bgResponse?.error || 'Gmail API analysis failed.';
+          console.error('[Popup] PROCESS_GMAIL_MESSAGE error:', err);
+          showNotice(err, 'error');
+          return;
+        }
+
+        console.log('[Popup] PROCESS_GMAIL_MESSAGE succeeded:', bgResponse.data);
+        renderResults(bgResponse.data);
+        switchToTab('tab-results');
+        showNotice(`Gmail API scan completed. Risk Level: ${bgResponse.data.risk_analysis?.risk_level || 'Low'}`, 'success');
+      });
+    });
+  } catch (err) {
+    hideLoading();
+    console.error('[Popup] Exception in analyzeGmailMessageViaApi:', err);
+    showNotice(err.message, 'error');
+  }
+}
+
+async function analyzeOutlookViaDom() {
+  showLoading('Extracting Outlook email content from DOM...');
+
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.id || !tab.url.includes('outlook.')) {
+      hideLoading();
+      showNotice('Please open an active email on Outlook (outlook.office.com or outlook.live.com).', 'error');
+      return;
+    }
+
+    chrome.tabs.sendMessage(tab.id, { action: 'EXTRACT_EMAIL' }, async (response) => {
+      if (chrome.runtime.lastError || !response || !response.success || !response.data) {
+        hideLoading();
+        showNotice(response?.error || 'No open Outlook email message detected.', 'error');
         return;
       }
 
       const emailData = response.data;
-      console.log('[Popup] Content script returned parsed DOM data:', emailData);
       updateLoadingMsg('Analyzing email with AI Engine & SQLite persistence...');
 
-      // Construct synthetic .eml file blob from DOM data for 1-click complete scan
       const emlContent = [
         `From: ${emailData.sender || ''}`,
         `To: ${emailData.receiver || ''}`,
@@ -167,33 +274,26 @@ async function analyzeCurrentWebmail(targetProvider) {
       ].join('\n');
 
       const emlBlob = new Blob([emlContent], { type: 'message/rfc822' });
-      const emlFile = new File([emlBlob], 'webmail_extracted.eml', { type: 'message/rfc822' });
+      const emlFile = new File([emlBlob], 'outlook_scraped.eml', { type: 'message/rfc822' });
 
       try {
         const scanRes = await executeCompleteScan(emlFile);
         hideLoading();
-        console.log('[Popup] Webmail complete scan finished:', scanRes);
-
         renderResults(scanRes, emailData);
         switchToTab('tab-results');
-
-        const level = scanRes.risk_analysis?.risk_level || 'Low';
-        chrome.runtime.sendMessage({ action: 'UPDATE_BADGE', payload: { riskLevel: level } });
-        showNotice(`Webmail analysis complete. Risk Level: ${level}`, 'success');
+        showNotice(`Outlook analysis complete. Risk Level: ${scanRes.risk_analysis?.risk_level || 'Low'}`, 'success');
       } catch (err) {
-        console.error('[Popup] Webmail scan execution error:', err);
         hideLoading();
         showNotice(err.message, 'error');
       }
     });
   } catch (err) {
-    console.error('[Popup] Exception during webmail analysis flow:', err);
     hideLoading();
     showNotice(err.message, 'error');
   }
 }
 
-// ─── Direct File Upload Actions (Direct File Handle Execution) ────────────────
+// ─── Direct File Upload Actions ────────────────────────────────────────────────
 
 function initUploads() {
   const dropEml = document.getElementById('dropzoneEml');
@@ -202,31 +302,17 @@ function initUploads() {
   const dropFile = document.getElementById('dropzoneFile');
   const fileFile = document.getElementById('fileInputFile');
 
-  // EML Upload
   if (dropEml && fileEml) {
-    dropEml.addEventListener('click', () => {
-      console.log('[Popup] EML dropzone clicked');
-      fileEml.click();
-    });
+    dropEml.addEventListener('click', () => fileEml.click());
     fileEml.addEventListener('change', (e) => {
-      if (e.target.files?.[0]) {
-        console.log('[Popup] EML file selected:', e.target.files[0].name);
-        handleEmlUpload(e.target.files[0]);
-      }
+      if (e.target.files?.[0]) handleEmlUpload(e.target.files[0]);
     });
   }
 
-  // Attachment Upload
   if (dropFile && fileFile) {
-    dropFile.addEventListener('click', () => {
-      console.log('[Popup] Sandbox Attachment dropzone clicked');
-      fileFile.click();
-    });
+    dropFile.addEventListener('click', () => fileFile.click());
     fileFile.addEventListener('change', (e) => {
-      if (e.target.files?.[0]) {
-        console.log('[Popup] Attachment file selected:', e.target.files[0].name);
-        handleAttachmentUpload(e.target.files[0]);
-      }
+      if (e.target.files?.[0]) handleAttachmentUpload(e.target.files[0]);
     });
   }
 }
@@ -234,22 +320,16 @@ function initUploads() {
 async function handleEmlUpload(file) {
   showLoading(`Uploading ${file.name} for 1-click complete scan...`);
   try {
-    console.log(`[Popup] Calling executeCompleteScan API for file '${file.name}' (${file.size} bytes)...`);
     const res = await executeCompleteScan(file);
     hideLoading();
-    console.log('[Popup] executeCompleteScan API returned response:', res);
-    
     renderResults(res, {
       subject: res.parsed_email?.subject || res.subject,
       sender: res.parsed_email?.sender || res.sender,
       scan_id: res.scan_id || res.email_id,
     });
     switchToTab('tab-results');
-    const level = res.risk_analysis?.risk_level || res.risk_level || 'Low';
-    chrome.runtime.sendMessage({ action: 'UPDATE_BADGE', payload: { riskLevel: level } });
-    showNotice(`Complete scan finished. Risk Level: ${level}`, 'success');
+    showNotice(`Complete scan finished. Risk Level: ${res.risk_analysis?.risk_level || 'Low'}`, 'success');
   } catch (err) {
-    console.error('[Popup] handleEmlUpload error:', err);
     hideLoading();
     showNotice(err.message, 'error');
   }
@@ -258,11 +338,8 @@ async function handleEmlUpload(file) {
 async function handleAttachmentUpload(file) {
   showLoading(`Analyzing ${file.name} in static sandbox...`);
   try {
-    console.log(`[Popup] Calling analyzeAttachment API for file '${file.name}' (${file.size} bytes)...`);
     const res = await analyzeAttachment(file);
     hideLoading();
-    console.log('[Popup] analyzeAttachment API returned response:', res);
-
     renderResults(
       {
         risk_level: res.risk_level,
@@ -277,10 +354,8 @@ async function handleAttachmentUpload(file) {
       }
     );
     switchToTab('tab-results');
-    chrome.runtime.sendMessage({ action: 'UPDATE_BADGE', payload: { riskLevel: res.risk_level || 'Low' } });
     showNotice(`Sandbox analysis complete for '${res.filename}'`, 'success');
   } catch (err) {
-    console.error('[Popup] handleAttachmentUpload error:', err);
     hideLoading();
     showNotice(err.message, 'error');
   }
@@ -302,11 +377,11 @@ function renderResults(scanData, metaData = {}) {
   empty.classList.add('hidden');
   content.classList.remove('hidden');
 
-  // Extract risk, parsed email, and indicator data regardless of endpoint structure
   const riskAnalysis = scanData.risk_analysis || scanData.risk || scanData;
   const parsedEmail = scanData.parsed_email || metaData;
   const phishingAnalysis = scanData.phishing_analysis || scanData.phishing || scanData;
   const sandboxAnalysis = scanData.sandbox_analysis || scanData.sandbox || null;
+  const authResults = scanData.auth_results || parsedEmail.auth_results || { spf: 'neutral', dkim: 'neutral', dmarc: 'neutral' };
 
   activeScanId = scanData.scan_id || scanData.email_id || metaData.scan_id;
 
@@ -319,11 +394,16 @@ function renderResults(scanData, metaData = {}) {
 
   title.innerText = level;
   scoreEl.innerText = score;
-
   banner.className = `risk-banner ${level.toLowerCase()}`;
+
+  // Update Auth Badges (SPF / DKIM / DMARC)
+  updateAuthPill('pillSpf', 'SPF', authResults.spf);
+  updateAuthPill('pillDkim', 'DKIM', authResults.dkim);
+  updateAuthPill('pillDmarc', 'DMARC', authResults.dmarc);
 
   document.getElementById('resSubject').innerText = parsedEmail.subject || metaData.subject || scanData.subject || '—';
   document.getElementById('resSender').innerText = parsedEmail.sender || metaData.sender || scanData.sender || '—';
+  document.getElementById('resReceiver').innerText = parsedEmail.receiver || metaData.receiver || scanData.receiver || '—';
   document.getElementById('resScanId').innerText = activeScanId || '—';
 
   const recommendation =
@@ -334,7 +414,7 @@ function renderResults(scanData, metaData = {}) {
 
   document.getElementById('resRecommendation').innerText = recommendation;
 
-  // Indicators list consolidation
+  // Indicators consolidation
   const indCount = document.getElementById('indCount');
   const indList = document.getElementById('indList');
 
@@ -369,17 +449,23 @@ function renderResults(scanData, metaData = {}) {
 
   btnJson.onclick = async () => {
     if (!activeScanId) return showNotice('No active scan ID for JSON export.', 'error');
-    console.log(`[Popup] Opening JSON report URL for scan ID '${activeScanId}'`);
     const url = await getJSONUrl(activeScanId);
     window.open(url, '_blank');
   };
 
   btnPdf.onclick = async () => {
     if (!activeScanId) return showNotice('No active scan ID for PDF export.', 'error');
-    console.log(`[Popup] Opening PDF report URL for scan ID '${activeScanId}'`);
     const url = await getPDFUrl(activeScanId);
     window.open(url, '_blank');
   };
+}
+
+function updateAuthPill(elementId, label, status = 'neutral') {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  const s = (status || 'neutral').toLowerCase();
+  el.className = `auth-pill ${s}`;
+  el.innerText = `${label}: ${s.toUpperCase()}`;
 }
 
 // ─── History Renderer ──────────────────────────────────────────────────────────
@@ -387,10 +473,7 @@ function renderResults(scanData, metaData = {}) {
 function initHistory() {
   const btnRefresh = document.getElementById('btnRefreshHistory');
   if (btnRefresh) {
-    btnRefresh.addEventListener('click', () => {
-      console.log('[Popup] Refresh History button clicked');
-      loadHistoryList();
-    });
+    btnRefresh.addEventListener('click', () => loadHistoryList());
   }
 }
 
@@ -402,13 +485,10 @@ async function loadHistoryList() {
   container.innerHTML = '';
 
   try {
-    console.log('[Popup] Fetching scan history list from backend...');
     const data = await getHistory(1, 30);
     spinner.classList.add('hidden');
 
     const scans = data.scans || [];
-    console.log(`[Popup] History list loaded with ${scans.length} records.`);
-
     if (scans.length === 0) {
       container.innerHTML = '<p class="empty-subtitle text-center py-6">No scan records in SQLite database.</p>';
       return;
@@ -434,7 +514,6 @@ async function loadHistoryList() {
     container.querySelectorAll('.btn-view').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-id');
-        console.log(`[Popup] Viewing detail for scan ID '${id}'...`);
         showLoading('Fetching report details...');
         try {
           const detail = await getReport(id);
@@ -453,7 +532,6 @@ async function loadHistoryList() {
       });
     });
   } catch (err) {
-    console.error('[Popup] History load error:', err);
     spinner.classList.add('hidden');
     container.innerHTML = `<p class="notice-banner error">Failed to load history: ${err.message}</p>`;
   }
@@ -472,7 +550,6 @@ async function initSettings() {
   if (notifInput) notifInput.checked = settings.enableNotifications;
 
   document.getElementById('btnSaveSettings')?.addEventListener('click', async () => {
-    console.log('[Popup] Save Preferences button clicked');
     await saveSettings({
       backendUrl: urlInput.value.trim() || 'http://127.0.0.1:8000',
       autoAnalyze: autoInput.checked,
@@ -483,7 +560,6 @@ async function initSettings() {
   });
 
   document.getElementById('btnTestBackend')?.addEventListener('click', async () => {
-    console.log('[Popup] Test Backend Connection button clicked');
     const start = performance.now();
     try {
       const res = await getSystemStatus();
@@ -496,7 +572,7 @@ async function initSettings() {
   });
 }
 
-// ─── Helper Functions ──────────────────────────────────────────────────────────
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 
 function switchToTab(tabId) {
   const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
