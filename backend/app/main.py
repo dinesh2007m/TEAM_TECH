@@ -10,6 +10,7 @@ from app.routes.sandbox import router as sandbox_router
 from app.routes.scans import router as scans_router
 from app.routes.reports import router as reports_router
 from app.routes.history import router as history_router
+from app.routes.risk import router as risk_router
 
 logger = logging.getLogger("app.main")
 
@@ -68,6 +69,7 @@ app.include_router(sandbox_router, prefix="/api/v1")
 app.include_router(scans_router, prefix="/api/v1")
 app.include_router(reports_router, prefix="/api/v1")
 app.include_router(history_router, prefix="/api/v1")
+app.include_router(risk_router, prefix="/api/v1")
 
 @app.get("/")
 def root():
@@ -75,4 +77,4 @@ def root():
 
 @app.get("/health")
 def health():
-    return {"status": "healthy"}
+    return {"status": "healthy"}

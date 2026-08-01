@@ -185,3 +185,60 @@ export async function analyzeAttachment(file) {
 
   return data;
 }
+
+/**
+ * Sends combined parsed email, phishing analysis, and sandbox analysis data
+ * to the Phase 5 Explainable Risk Scoring Engine API.
+ *
+ * @param {{ parsed_email?: object, phishing_result?: object, sandbox_result?: object }} payload
+ * @returns {Promise<{
+ *   status: string,
+ *   risk_score: number,
+ *   risk_level: string,
+ *   reasons: Array<string>,
+ *   recommendations: Array<string>,
+ *   attack_path: Array<{ stage: string, reason: string }>,
+ *   summary: string
+ * }>}
+ * @throws {Error} with a user-friendly message on any failure.
+ */
+export async function analyzeRisk(payload) {
+  console.log('[emailService] Sending combined data to Explainable Risk Engine...');
+
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/risk/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch (networkError) {
+    console.error('[emailService] Risk Engine network error:', networkError);
+    throw new Error(
+      'Cannot reach the Risk Analysis server. Make sure the backend is running at http://127.0.0.1:8000.'
+    );
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error('Risk analysis returned an unreadable response. Please try again.');
+  }
+
+  console.log('[emailService] Risk response:', response.status, data);
+
+  if (!response.ok) {
+    const detail =
+      typeof data?.detail === 'string'
+        ? data.detail
+        : Array.isArray(data?.detail)
+        ? data.detail.map((e) => e.msg).join(', ')
+        : `HTTP ${response.status}`;
+
+    throw new Error(detail || 'Risk analysis failed. Please try again.');
+  }
+
+  return data;
+}
+
