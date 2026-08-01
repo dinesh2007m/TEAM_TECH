@@ -42,7 +42,7 @@
   {
     "id": "act-005",
     "title": "Credential Access Attempt",
-    "description": "Attempted memory dump of lsass.exe process blocked by Aegis Guard",
+    "description": "Attempted memory dump of lsass.exe process blocked by TeamTech Guard",
     "timestamp": "14:02:41",
     "type": "credential",
     "icon": "Key",

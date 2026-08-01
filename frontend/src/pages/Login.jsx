@@ -22,7 +22,7 @@ import { cn } from '../utils/cn';
 
 export const Login = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('ciso@aegisx.cyber.sec');
+  const [email, setEmail] = useState('ciso@teamtech.cyber.sec');
   const [password, setPassword] = useState('••••••••••••');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -45,7 +45,7 @@ export const Login = () => {
   };
 
   const handleDemoLogin = () => {
-    setEmail('alex.vance@aegisx.cyber.sec');
+    setEmail('alex.vance@teamtech.cyber.sec');
     setPassword('CyberGuard#2026!');
     setIsLoading(true);
     setLoadingText('Bypassing via CISO Demo Security Clearance...');
@@ -73,7 +73,7 @@ export const Login = () => {
             </div>
           </div>
           <span className="font-bold text-lg text-white font-heading tracking-wider">
-            AEGIS<span className="text-blue-500">X</span>
+            Team<span className="text-blue-500">Tech</span>
           </span>
         </div>
         <Badge variant="primary" size="sm" dot>
@@ -102,7 +102,7 @@ export const Login = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-2xl text-white font-heading tracking-wider">
-                    AEGIS<span className="text-blue-500">X</span>
+                    Team<span className="text-blue-500">Tech</span>
                   </span>
                   <Badge variant="primary" size="sm" glow>
                     ENTERPRISE AI
@@ -244,7 +244,7 @@ export const Login = () => {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="name@aegisx.cyber.sec"
+                      placeholder="name@teamtech.cyber.sec"
                       className="w-full pl-10 pr-4 py-2.5 bg-gray-900/90 border border-gray-800 focus:border-blue-500 rounded-xl text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-sans"
                     />
                   </div>
@@ -367,7 +367,7 @@ export const Login = () => {
       <footer className="relative z-20 px-6 py-4 border-t border-gray-800/60 bg-[#030712]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-400 font-mono">
           <div className="flex items-center gap-2">
-            <span>© 2026 AegisX Cyber Operations Systems, Inc.</span>
+            <span>© 2026 TeamTech Cyber Operations Systems, Inc.</span>
             <span className="text-gray-400">•</span>
             <span className="text-blue-400 font-semibold">Version 2.4.0-SOC</span>
           </div>

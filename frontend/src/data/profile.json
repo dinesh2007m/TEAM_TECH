@@ -1,10 +1,10 @@
 {
   "name": "Dr. Alex Vance",
-  "email": "alex.vance@aegisx.cyber.sec",
+  "email": "alex.vance@teamtech.cyber.sec",
   "role": "Chief Information Security Officer",
   "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256",
   "securityClearance": "LEVEL 5 - TOP SECRET / CISO",
-  "tenant": "Aegis Global Cyber Operations",
+  "tenant": "TeamTech Global Cyber Operations",
   "status": "Online",
   "lastActive": "Just now",
   "mfaEnabled": true,

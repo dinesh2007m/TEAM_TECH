@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Menu, Sun, Moon, Plus, ShieldCheck, RefreshCw } from 'lucide-react';
+import { Menu, Plus, RefreshCw } from 'lucide-react';
 import { useSidebar } from '../../hooks/useSidebar';
-import { useTheme } from '../../hooks/useTheme';
 import { useToast } from '../../hooks/useToast';
 import { SearchBar } from '../ui/SearchBar';
 import { IconButton } from '../ui/IconButton';
@@ -13,7 +12,6 @@ import { Badge } from '../ui/Badge';
 
 export const Navbar = () => {
   const { toggleMobileSidebar } = useSidebar();
-  const { theme, toggleTheme } = useTheme();
   const { addToast } = useToast();
   const [isQuickActionModalOpen, setIsQuickActionModalOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -78,15 +76,6 @@ export const Navbar = () => {
             >
               New Scan
             </Button>
-
-            {/* Theme Toggle */}
-            <IconButton
-              icon={theme === 'dark' ? Sun : Moon}
-              variant="secondary"
-              size="md"
-              onClick={toggleTheme}
-              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
-            />
 
             {/* Notifications */}
             <NotificationDropdown />

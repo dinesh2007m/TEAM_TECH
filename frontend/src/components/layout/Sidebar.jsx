@@ -94,7 +94,7 @@ export const Sidebar = () => {
             >
               <div className="flex items-center gap-1.5">
                 <span className="font-bold text-lg text-white font-heading tracking-wider">
-                  AEGIS<span className="text-blue-500">X</span>
+                  Team<span className="text-blue-500">Tech</span>
                 </span>
                 <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/30">
                   v2.4

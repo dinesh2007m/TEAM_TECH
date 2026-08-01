@@ -38,7 +38,7 @@ export const LoadingOverlay = ({
       <div className="flex items-center gap-2 mb-1">
         <Cpu className="w-4 h-4 text-cyan-400 animate-pulse" />
         <span className="text-xs font-mono font-bold tracking-widest text-cyan-400 uppercase">
-          AegisX Core Engine
+          TeamTech Core Engine
         </span>
       </div>
 
