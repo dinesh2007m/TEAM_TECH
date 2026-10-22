@@ -2,60 +2,49 @@
 
 **Agentic AI Hackathon 2026 · Ziro.Digital · TEAM TECH**
 
-CodePulse turns a student's coding-practice evidence into a focused weekly plan, a voice briefing, and a traceable plan sheet.
+CodePulse turns coding-practice evidence into a focused weekly plan, a voice briefing, and a traceable problem list. It follows the assigned workflow: assess topic coverage, detect weak areas, require approval before saving a plan, and verify the resulting plan state.
 
 ## Features
-- Synthetic demo snapshot, live public Codeforces profile connector, and CSV/JSON imports.
-- Topic mapping against a target topic mix; Graphs are prioritised when the observed graph count is zero.
-- Canonical problem ID deduplication across platforms.
-- Private/unreadable profiles trigger an export request instead of guessed data.
-- Snapshot comparison avoids false progress claims when solved IDs are unchanged.
-- Weekly problem list with links, rationale, and estimated practice time.
-- Browser speech briefing and transcript download.
-- Human approval before saving a plan, with duplicate-save protection.
-- Re-check workflow, evidence ledger, and JSON/CSV exports.
-- Four official test cases plus two additional automated tests.
+- Clearly labelled synthetic demo fixture for a safe, repeatable demonstration.
+- Live public Codeforces submissions connector. Other platforms are not scraped by this version.
+- Explicit private/unreadable-profile state instead of guessing data.
+- Topic prioritisation, including Graphs as the first priority when there are zero observed Graphs problems.
+- Deduplication by canonical problem ID.
+- Prior-snapshot comparison that does not claim progress when the IDs are unchanged.
+- Weekly list of specific problem links, topic rationale, and estimated practice time.
+- Browser voice briefing using speech synthesis.
+- Human approval before saving; stable plan key prevents duplicate local saves on retries.
+- Verification panel labels synthetic fixture verification as snapshot-only.
+- Four official scenarios and a six-test Node test suite.
 
 ## Run locally
 Requires Node.js 18+.
 
-```bash
-npm start
-```
+    npm test
+    npm start
 
-Open http://localhost:3000. Select **Demo snapshot**, run the coach, review the proposed problems, approve the plan, then run verification. Use **Official test suite** to run the four hackathon scenarios.
+Open http://localhost:3000. Select **Synthetic demo snapshot**, click **Run weekly coach**, review the exact problem list, approve it explicitly, and run verification. The browser speech feature reads the generated briefing aloud.
 
-Run automated tests:
+## Public profile retrieval
+Select **Public Codeforces profile** and enter a handle. The server calls the Codeforces user.status endpoint, retains the retrieval time and source URL, and deduplicates accepted problems. It maps problem tags into a limited topic set. If retrieval fails, the app shows an unavailable/export message rather than inventing values. This version does not claim live LeetCode, HackerRank, or company-specific integrations.
 
-```bash
-npm test
-```
-
-## Live public profile retrieval
-The connector in this version supports public Codeforces profiles. For other platforms, import a permitted CSV/JSON export. A profile URL is never treated as proof that the source was read successfully. Blocked/private sources return an export-required or unavailable state.
-
-## Optional Gemini briefing
-The app works without Gemini using an evidence-based template. To enable the optional server-side narration, set `GEMINI_API_KEY` and optionally `GEMINI_MODEL` as environment variables. Never commit API keys. The model may rewrite narration only; deterministic rules control counts, priorities, links, and approval state.
-
-## Deployment
-Deploy this folder to a Node-capable host, with build command `npm test` and start command `npm start`. A `render.yaml` is included. The static `public/` folder alone does not provide live Codeforces or Gemini server endpoints.
-
-## Official scenarios
-| ID | Scenario | Expected behavior |
+## Official tests
+| ID | Input scenario | Expected result |
 |---|---|---|
-| TC1 | Profile has zero Graphs problems | Graphs prioritised |
-| TC2 | Profile is private | Ask for an export; do not guess |
-| TC3 | Same problem solved on two platforms | Count once by canonical ID |
+| TC1 | Profile shows zero Graphs problems | Graphs prioritised |
+| TC2 | Profile is private | Request export instead of guessing |
+| TC3 | Same problem solved on two platforms | Count it once by canonical ID |
 | TC4 | No change this week | No false progress claim |
 
-The automated test suite also verifies CSV parsing and Codeforces accepted-submission deduplication. Test fixture outputs are synthetic; test live retrieval from the deployed host before claiming it as live evidence.
+Test fixtures are synthetic. Verify live Codeforces retrieval from the deployed host before describing it as live evidence.
 
-## Project layout
-- `public/index.html` — UI
-- `public/styles.css` — responsive styling
-- `public/agent-core.js` — decision rules, deduplication, planning, official scenarios
-- `public/app.js` — UI state, imports/exports, voice, approval, evidence and verification
-- `server.js` — web server, Codeforces connector, optional Gemini endpoint
-- `tests/` — automated tests
-- `data/` — sample inputs and official test evidence
-- `docs/` — architecture, workflow, demo and portal submission guide
+## Deployment
+Deploy the entire folder to a Node-capable host. Build command: npm test; start command: npm start. A render.yaml is included and uses /api/health for the health check. Static hosting of only public/ does not provide the live Codeforces API route.
+
+## Project structure
+- public/index.html — UI and inputs
+- public/styles.css — responsive styles
+- public/agent-core.js — planning rules, deduplication, progress logic, official scenarios
+- public/app.js — UI, speech, approval, verification, and exports
+- server.js — web server and live Codeforces connector
+- tests/core.test.js — automated tests
