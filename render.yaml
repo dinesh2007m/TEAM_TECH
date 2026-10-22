@@ -1,9 +1,28 @@
 services:
+  # Keep CodePulse on its own service name; the existing live service is not
+  # managed by this deployment branch and will remain untouched.
   - type: web
-    name: codepulse-coding-practice-coach
-    runtime: node
+    name: team-tech-cybersecurity-api
+    runtime: python
     plan: free
-    rootDir: CodePulse
-    buildCommand: npm test
-    startCommand: npm start
-    healthCheckPath: /api/health
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+  - type: web
+    name: team-tech-cybersecurity-frontend
+    runtime: static
+    plan: free
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://team-tech-cybersecurity-api.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
