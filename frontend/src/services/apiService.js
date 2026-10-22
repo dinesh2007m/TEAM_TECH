@@ -4,10 +4,10 @@
  * Centralised API client for the TEAM_TECH backend.
  * Every call goes through the helpers here — no raw fetch() or mock data anywhere else.
  *
- * Backend base: http://127.0.0.1:8000
+ * VITE_API_BASE_URL is configured by the deployment environment; localhost is the dev fallback.
  */
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000').replace(/\\/+$/, '');
 
 // ─── Generic HTTP helpers ─────────────────────────────────────────────────────
 
@@ -45,7 +45,7 @@ async function _get(path) {
   try {
     response = await fetch(`${API_BASE_URL}${path}`);
   } catch {
-    throw new Error('Cannot reach the backend. Make sure it is running at http://127.0.0.1:8000.');
+    throw new Error('Cannot reach the backend. Check that the deployed API service is running and reachable.');
   }
   return _handleResponse(response);
 }
@@ -59,7 +59,7 @@ async function _post(path, body) {
       body: JSON.stringify(body),
     });
   } catch {
-    throw new Error('Cannot reach the backend. Make sure it is running at http://127.0.0.1:8000.');
+    throw new Error('Cannot reach the backend. Check that the deployed API service is running and reachable.');
   }
   return _handleResponse(response);
 }
@@ -72,7 +72,7 @@ async function _postForm(path, formData) {
       body: formData,
     });
   } catch {
-    throw new Error('Cannot reach the backend. Make sure it is running at http://127.0.0.1:8000.');
+    throw new Error('Cannot reach the backend. Check that the deployed API service is running and reachable.');
   }
   return _handleResponse(response);
 }
@@ -82,7 +82,7 @@ async function _delete(path) {
   try {
     response = await fetch(`${API_BASE_URL}${path}`, { method: 'DELETE' });
   } catch {
-    throw new Error('Cannot reach the backend. Make sure it is running at http://127.0.0.1:8000.');
+    throw new Error('Cannot reach the backend. Check that the deployed API service is running and reachable.');
   }
   return _handleResponse(response);
 }
