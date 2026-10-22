@@ -1,6 +1,6 @@
 'use strict';
 const $ = (id) => document.getElementById(id);
-let lastResult = null, lastTests = [];
+let lastResult = null, lastTests = [], lastProfileData = null;
 const demo = {
   profileHandle: 'demo-student',
   profileUrl: 'https://example.test/public/demo-student',
@@ -54,6 +54,7 @@ $('coachForm').addEventListener('submit', async (event) => {
   let profile;
   if (source === 'private') {
     profile = { visibility:'private', profileHandle:handle, profileUrl:'https://example.test/profile/' + encodeURIComponent(handle), mode:'private-test' };
+    lastProfileData = profile;
   } else if (source === 'codeforces') {
     $('result').classList.remove('hidden'); $('resultMeta').textContent = 'Retrieving public Codeforces submissions…';
     try {
@@ -61,12 +62,13 @@ $('coachForm').addEventListener('submit', async (event) => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Public profile request failed');
       profile = data.profile;
+      lastProfileData = profile;
     } catch (error) {
       renderResult({status:'needs_export', message:'Live retrieval failed: ' + error.message + '. Import a permitted export; no data was guessed.',
         progress:{claim:false}, plan:null, evidence:{profileUrl:'https://codeforces.com/profile/' + encodeURIComponent(handle), sourceMode:'live retrieval failed', retrievedAt:null, sourceState:'unavailable'}});
       return;
     }
-  } else profile = Object.assign({}, demo, {profileHandle: handle || 'demo-student'});
+  } else { profile = Object.assign({}, demo, {profileHandle: handle || 'demo-student'}); lastProfileData = profile; }
   const prev = $('previous').value.trim();
   renderResult(CodePulseCore.runCoach({
     profile, weeklyHours:Number($('hours').value),
@@ -83,7 +85,10 @@ $('approve').addEventListener('click', () => {
   if (!lastResult || !lastResult.plan) return;
   const label = 'Save ' + lastResult.plan.items.length + ' problems for ' + lastResult.plan.weeklyHours + ' practice hours?';
   if (!confirm(label + '\n\nThis is the required explicit human-approval step.')) return;
-  const key = 'codepulse:' + lastResult.evidence.profileUrl + ':' + lastResult.evidence.retrievedAt + ':' + lastResult.plan.items.map(p => p.canonicalId).join(',');
+  const now = new Date();
+  now.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  const week = now.toISOString().slice(0, 10);
+  const key = 'codepulse:' + lastResult.evidence.profileUrl + ':' + week + ':' + lastResult.plan.items.map(p => p.canonicalId).sort().join(',');
   const saved = JSON.parse(localStorage.getItem('codepulseSavedPlans') || '[]');
   if (saved.some(x => x.key === key)) $('actionState').textContent = 'This exact plan was already saved; duplicate execution was prevented.';
   else {
@@ -93,18 +98,45 @@ $('approve').addEventListener('click', () => {
   }
   $('actionState').className = 'notice ok'; $('verify').disabled = false;
 });
-$('verify').addEventListener('click', () => {
+$('verify').addEventListener('click', async () => {
   if (!lastResult || !lastResult.plan) return;
-  const invalid = lastResult.plan.items.filter(p => !/^https:\/\/(leetcode\.com|codeforces\.com)\//i.test(p.url)).map(p => p.url);
-  const result = {
-    state: lastResult.evidence.sourceMode === 'live-codeforces' ? 'snapshot-checked' : 'snapshot-only',
-    note: lastResult.evidence.sourceMode === 'live-codeforces'
-      ? 'Links were checked for allowed format. Re-run live retrieval to refresh solved counts.'
-      : 'Synthetic snapshot checks are labelled snapshot-only; no live source refresh is claimed.',
-    invalidProblemLinks: invalid, checkedAt: new Date().toISOString()
-  };
+  const invalid = lastResult.plan.items.filter(p => {
+    try {
+      const u = new URL(p.url);
+      return u.protocol !== 'https:' || !['leetcode.com','www.leetcode.com','codeforces.com','www.codeforces.com'].includes(u.hostname);
+    } catch { return true; }
+  }).map(p => p.url);
+  const result = { checkedAt:new Date().toISOString(), invalidProblemLinks:invalid, plannedProblemCount:lastResult.plan.items.length };
+  if (lastResult.evidence.sourceMode === 'live-codeforces' && lastProfileData && lastProfileData.profileHandle) {
+    result.state = 'live-refresh';
+    result.sourceUrl = 'https://codeforces.com/api/user.status?handle=' + encodeURIComponent(lastProfileData.profileHandle);
+    try {
+      const response = await fetch('/api/codeforces?handle=' + encodeURIComponent(lastProfileData.profileHandle));
+      const data = await response.json();
+      if (!response.ok || !data.profile) throw new Error(data.error || 'Refresh failed');
+      const previous = new Set((lastProfileData.solvedProblems || []).map(p => p.canonicalId));
+      const current = new Set((data.profile.solvedProblems || []).map(p => p.canonicalId));
+      result.previousUniqueSolved = previous.size;
+      result.currentUniqueSolved = current.size;
+      result.countDelta = current.size - previous.size;
+      result.newProblemIds = Array.from(current).filter(id => !previous.has(id));
+      result.removedProblemIds = Array.from(previous).filter(id => !current.has(id));
+      result.observedAt = data.profile.retrievedAt;
+      result.note = 'Public profile was refreshed. Counts are compared by canonical problem ID; the link check validates URL format, not external page availability.';
+      lastProfileData = data.profile;
+      result.refreshSucceeded = true;
+    } catch (error) {
+      result.refreshSucceeded = false;
+      result.error = String(error.message || error);
+      result.state = 'refresh-failed';
+      result.note = 'Refresh failed or was blocked. The previous snapshot remains visible; no successful recheck is claimed.';
+    }
+  } else {
+    result.state = 'snapshot-only';
+    result.note = 'Synthetic demo checks are snapshot-only. No live source refresh is claimed.';
+  }
   $('verifyState').textContent = JSON.stringify(result, null, 2);
-  $('verifyState').className = 'notice ' + (invalid.length ? 'warn' : 'ok');
+  $('verifyState').className = 'notice ' + (invalid.length || result.refreshSucceeded === false ? 'warn' : 'ok');
 });
 $('export').addEventListener('click', () => {
   if (!lastResult || !lastResult.plan) return;
