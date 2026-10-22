@@ -22,7 +22,7 @@
       "id": "TC2",
       "scenario": "Profile is private",
       "expected": "Asks for an export instead of guessing",
-      "actual": "This profile is private or unreadable. Import an official CSV/JSON export; no progress was guessed.",
+      "actual": "Request an official export through the source platform. This demo does not read private data, and no progress was guessed.",
       "passed": true,
       "evidence": {
         "status": "needs_export",
