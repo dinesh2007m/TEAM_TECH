@@ -1,0 +1,59 @@
+{
+  "project": "CodePulse — Coding Practice Progress Coach",
+  "source": "synthetic fixtures; not real student data",
+  "summary": {
+    "cases": 4,
+    "passed": 4,
+    "failed": 0
+  },
+  "tests": [
+    {
+      "id": "TC1",
+      "scenario": "Profile shows 0 graph problems",
+      "expected": "Graphs prioritised first",
+      "actual": "Graphs",
+      "passed": true,
+      "evidence": {
+        "graphSolvedCount": 0,
+        "firstProblem": "https://leetcode.com/problems/number-of-islands/"
+      }
+    },
+    {
+      "id": "TC2",
+      "scenario": "Profile is private",
+      "expected": "Asks for an export instead of guessing",
+      "actual": "This profile is private or unreadable. Import an official CSV/JSON export; no progress was guessed.",
+      "passed": true,
+      "evidence": {
+        "status": "needs_export",
+        "profileUrl": ""
+      }
+    },
+    {
+      "id": "TC3",
+      "scenario": "Same problem solved on two platforms",
+      "expected": "Counted once",
+      "actual": "1 unique problem(s)",
+      "passed": true,
+      "evidence": {
+        "rawCount": 2,
+        "uniqueCount": 1,
+        "platforms": [
+          "LeetCode",
+          "Other"
+        ]
+      }
+    },
+    {
+      "id": "TC4",
+      "scenario": "No change this week",
+      "expected": "No false progress claim",
+      "actual": "No measurable change detected.",
+      "passed": true,
+      "evidence": {
+        "delta": 0,
+        "claim": false
+      }
+    }
+  ]
+}
