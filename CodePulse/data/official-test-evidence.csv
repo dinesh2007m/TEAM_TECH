@@ -1,0 +1,5 @@
+id,scenario,expected,actual,passed,evidence_type
+"TC1","Profile shows 0 graph problems","Graphs prioritised first","Graphs",true,"synthetic fixture"
+"TC2","Profile is private","Asks for an export instead of guessing","Export required; no progress guessed",true,"synthetic fixture"
+"TC3","Same problem solved on two platforms","Counted once","1 unique problem from 2 source records",true,"synthetic fixture"
+"TC4","No change this week","No false progress claim","No measurable change detected.",true,"synthetic fixture"
