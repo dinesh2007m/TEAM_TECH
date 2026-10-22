@@ -1,0 +1,24 @@
+name: CodePulse tests
+
+on:
+  push:
+    branches: [codepulse-agentic-ai-hackathon-2026]
+    paths:
+      - "CodePulse/**"
+  pull_request:
+    paths:
+      - "CodePulse/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: CodePulse
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm test
+      - run: node --check server.js && node --check public/agent-core.js && node --check public/app.js
