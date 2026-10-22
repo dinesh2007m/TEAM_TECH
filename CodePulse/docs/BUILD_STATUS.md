@@ -4,6 +4,7 @@
 The CodePulse application source, Node server, tests, README and deployment configuration are committed to the public TEAM_TECH repository on branch codepulse-agentic-ai-hackathon-2026, under the CodePulse/ folder. The repository main branch has not been changed.
 
 ## Local checks
+- GitHub Actions workflow added at .github/workflows/codepulse-tests.yml to rerun the Node test suite and syntax checks on CodePulse changes.
 - npm test: 6 passed, 0 failed.
 - Node syntax checks pass for the server and browser-side JavaScript.
 - Four official scenarios are implemented with synthetic fixture evidence.
