@@ -34,4 +34,6 @@ return [
 {id:'TC3',scenario:'Same problem solved on two platforms',expected:'Counted once',actual:`${run3.length} unique problem(s)`,passed:run3.length===1&&run3[0].sourcePlatforms.length===2,evidence:{rawCount:2,uniqueCount:run3.length,platforms:run3[0]?.sourcePlatforms}},
 {id:'TC4',scenario:'No change this week',expected:'No false progress claim',actual:run4.label,passed:run4.available&&run4.delta===0&&!run4.claim,evidence:{delta:run4.delta,claim:run4.claim}}
 ];}
-if(typeof module!=='undefined')module.exports={TOPICS,TARGET_MIX,CATALOG,key,deduplicate,counts,compareProgress,runCoach,officialTests};
+const CodePulseCoreAPI={TOPICS,TARGET_MIX,CATALOG,key,deduplicate,counts,compareProgress,runCoach,officialTests};
+if(typeof module!=='undefined'&&module.exports)module.exports=CodePulseCoreAPI;
+if(typeof window!=='undefined')window.CodePulseCore=CodePulseCoreAPI;
